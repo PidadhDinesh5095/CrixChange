@@ -16,14 +16,22 @@ const authService = {
   },
 
   // Logout user
-  logout: async () => {
-    const response = await api.post('/auth/logout');
+  logout: async (token) => {
+    const response = await api.post('/auth/logout', {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return response.data;
   },
 
   // Get current user
   getMe: async () => {
-    const response = await api.get('/auth/me');
+    const response = await api.post('/auth/me', {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return response.data;
   },
 

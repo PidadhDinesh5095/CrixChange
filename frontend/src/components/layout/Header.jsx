@@ -28,10 +28,12 @@ const Header = () => {
   const { isDark } = useSelector((state) => state.theme);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const token = localStorage.getItem('token');
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate('/');
+   
+    dispatch(logout(token));
+    navigate('/login');
     setIsProfileMenuOpen(false);
     setIsMobileMenuOpen(false);
   };

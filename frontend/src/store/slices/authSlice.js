@@ -3,11 +3,11 @@ import authService from '../../services/authService';
 
 // Initial state
 const initialState = {
-  user: null,
+  user: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('token'),
   refreshToken: localStorage.getItem('refreshToken'),
   isLoading: false,
-  isAuthenticated: false,
+  isAuthenticated: !!localStorage.getItem('token'),
   error: null,
 };
 
@@ -42,11 +42,12 @@ export const login = createAsyncThunk(
 
 export const logout = createAsyncThunk(
   'auth/logout',
-  async (_, { rejectWithValue }) => {
+  async (token, { rejectWithValue }) => {
     try {
-      await authService.logout();
+      await authService.logout(token);
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
+      
       return true;
     } catch (error) {
       // Even if logout fails on server, clear local storage
@@ -131,6 +132,7 @@ export const verifyEmail = createAsyncThunk(
   async (token, { rejectWithValue }) => {
     try {
       const response = await authService.verifyEmail(token);
+      console.log("Email verification response:", response);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Email verification failed');
@@ -166,9 +168,11 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       localStorage.setItem('token', token);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
     },
     updateUser: (state, action) => {
       state.user = { ...state.user, ...action.payload };
+      localStorage.setItem('user', JSON.stringify(state.user));
     },
   },
   extraReducers: (builder) => {
@@ -185,13 +189,13 @@ const authSlice = createSlice({
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
         state.error = null;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
       })
-
       // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
@@ -204,13 +208,13 @@ const authSlice = createSlice({
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
         state.error = null;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
       })
-
       // Logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
@@ -218,8 +222,8 @@ const authSlice = createSlice({
         state.refreshToken = null;
         state.isAuthenticated = false;
         state.error = null;
+        localStorage.removeItem('user');
       })
-
       // Load User
       .addCase(loadUser.pending, (state) => {
         state.isLoading = true;
@@ -229,6 +233,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.error = null;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(loadUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -237,8 +242,8 @@ const authSlice = createSlice({
         state.refreshToken = null;
         state.isAuthenticated = false;
         state.error = action.payload;
+        localStorage.removeItem('user');
       })
-
       // Update Profile
       .addCase(updateProfile.pending, (state) => {
         state.isLoading = true;
@@ -253,7 +258,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
       // Change Password
       .addCase(changePassword.pending, (state) => {
         state.isLoading = true;
@@ -267,7 +271,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
       // Forgot Password
       .addCase(forgotPassword.pending, (state) => {
         state.isLoading = true;
@@ -281,7 +284,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
       // Reset Password
       .addCase(resetPassword.pending, (state) => {
         state.isLoading = true;
@@ -297,7 +299,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
       // Verify Email
       .addCase(verifyEmail.pending, (state) => {
         state.isLoading = true;
@@ -314,7 +315,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-
       // Resend Verification
       .addCase(resendVerification.pending, (state) => {
         state.isLoading = true;

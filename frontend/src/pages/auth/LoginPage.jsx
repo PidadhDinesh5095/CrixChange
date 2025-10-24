@@ -10,7 +10,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -21,18 +21,7 @@ const LoginPage = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, from]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
+  
 
   const handleChange = (e) => {
     setFormData({
@@ -54,9 +43,10 @@ const LoginPage = () => {
       if (login.fulfilled.match(result)) {
         toast.success('Login successful!');
         navigate(from, { replace: true });
+        // Navigation is handled by useEffect above
+      } else {
+        toast.error('Login failed. Please check your credentials.');
       }
-      navigate(from, { replace: true });
-
     } catch (error) {
       // Error is handled by the slice and shown via toast
     }

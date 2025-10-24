@@ -24,31 +24,8 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
-  // const { user, isLoading } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
   const { isDark } = useSelector((state) => state.theme);
-
-  // Dummy user for preview/demo
-  const user = {
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@email.com',
-    phone: '9876543210',
-    dateOfBirth: '1990-01-01',
-    gender: 'male',
-    kycStatus: 'approved',
-    preferences: {
-      notifications: {
-        email: true,
-        push: true,
-        trades: true,
-        deposits: true,
-        withdrawals: true,
-        kyc: true
-      }
-    },
-    createdAt: '2022-01-01T00:00:00.000Z'
-  };
-  const isLoading = false;
 
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -56,9 +33,7 @@ const ProfilePage = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    dateOfBirth: '',
-    gender: ''
+    phone: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -80,9 +55,7 @@ const ProfilePage = () => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        phone: user.phone || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-        gender: user.gender || ''
+        phone: user.phone || ''
       });
       setNotifications(user.preferences?.notifications || notifications);
     }
@@ -183,7 +156,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-white dark:bg-black py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -192,10 +165,10 @@ const ProfilePage = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-black dark:text-white">
             Profile Settings
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-black dark:text-white">
             Manage your account settings and preferences
           </p>
         </motion.div>
@@ -208,30 +181,38 @@ const ProfilePage = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="lg:col-span-1"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-black rounded-xl shadow-lg p-6">
               <div className="text-center">
                 <div className="relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-white">
+                  <div className="w-24 h-24 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl font-bold text-white dark:text-black">
                       {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                     </span>
                   </div>
-                  <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                  <button className="absolute bottom-0 right-0 w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-semibold text-black dark:text-white">
                   {user.firstName} {user.lastName}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-black dark:text-white mb-4">
                   {user.email}
                 </p>
                 <div className="flex items-center justify-center space-x-2 mb-4">
-                  <Shield className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">KYC Status:</span>
+                  <Shield className="w-4 h-4 text-black dark:text-white" />
+                  <span className="text-sm text-black dark:text-white">KYC Status:</span>
                   {getKYCStatusBadge()}
+                  {user.kycStatus === 'pending' && (
+                    <button
+                      onClick={() => window.location.href = '/kyc'}
+                      className="ml-2 px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                    >
+                      Complete KYC
+                    </button>
+                  )}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-500">
+                <div className="text-sm text-black dark:text-white">
                   Member since {new Date(user.createdAt).toLocaleDateString('en-IN', { 
                     month: 'long', 
                     year: 'numeric' 
@@ -249,15 +230,15 @@ const ProfilePage = () => {
             className="lg:col-span-2 space-y-8"
           >
             {/* Personal Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-black rounded-xl shadow-lg">
+              <div className="p-6 border-b border-black dark:border-white">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     Personal Information
                   </h3>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
+                    className="inline-flex items-center px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
                   >
                     {isEditing ? <X className="w-4 h-4 mr-1" /> : <Edit className="w-4 h-4 mr-1" />}
                     {isEditing ? 'Cancel' : 'Edit'}
@@ -267,13 +248,13 @@ const ProfilePage = () => {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="form-label">First Name</label>
+                    <label className="form-label text-black dark:text-white">First Name</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black dark:text-white" />
                       <input
                         type="text"
                         name="firstName"
-                        className={`form-input pl-10 ${!isEditing ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
                         value={profileData.firstName}
                         onChange={handleProfileChange}
                         disabled={!isEditing}
@@ -281,71 +262,42 @@ const ProfilePage = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="form-label">Last Name</label>
+                    <label className="form-label text-black dark:text-white">Last Name</label>
                     <input
                       type="text"
                       name="lastName"
-                      className={`form-input ${!isEditing ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                      className={`form-input text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
                       value={profileData.lastName}
                       onChange={handleProfileChange}
                       disabled={!isEditing}
                     />
                   </div>
                   <div>
-                    <label className="form-label">Email</label>
+                    <label className="form-label text-black dark:text-white">Email</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black dark:text-white" />
                       <input
                         type="email"
                         name="email"
-                        className="form-input pl-10 bg-gray-50 dark:bg-gray-700"
+                        className="form-input pl-10 text-black dark:text-white bg-gray-100 dark:bg-gray-900"
                         value={profileData.email}
                         disabled
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="form-label">Phone</label>
+                    <label className="form-label text-black dark:text-white">Phone</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black dark:text-white" />
                       <input
                         type="tel"
                         name="phone"
-                        className={`form-input pl-10 ${!isEditing ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
                         value={profileData.phone}
                         onChange={handleProfileChange}
                         disabled={!isEditing}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="form-label">Date of Birth</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        className={`form-input pl-10 ${!isEditing ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
-                        value={profileData.dateOfBirth}
-                        onChange={handleProfileChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="form-label">Gender</label>
-                    <select
-                      name="gender"
-                      className={`form-input ${!isEditing ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
-                      value={profileData.gender}
-                      onChange={handleProfileChange}
-                      disabled={!isEditing}
-                    >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
                   </div>
                 </div>
                 {isEditing && (
@@ -353,7 +305,7 @@ const ProfilePage = () => {
                     <button
                       onClick={handleSaveProfile}
                       disabled={isLoading}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium transition-colors disabled:opacity-50"
                     >
                       <Save className="w-4 h-4 mr-2" />
                       Save Changes
@@ -364,15 +316,15 @@ const ProfilePage = () => {
             </div>
 
             {/* Security Settings */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-black rounded-xl shadow-lg">
+              <div className="p-6 border-b border-black dark:border-white">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     Security Settings
                   </h3>
                   <button
                     onClick={() => setIsChangingPassword(!isChangingPassword)}
-                    className="inline-flex items-center px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
+                    className="inline-flex items-center px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
                   >
                     <Lock className="w-4 h-4 mr-1" />
                     Change Password
@@ -380,36 +332,36 @@ const ProfilePage = () => {
                 </div>
               </div>
               {isChangingPassword && (
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="p-6 border-b border-black dark:border-white">
                   <div className="space-y-4">
                     <div>
-                      <label className="form-label">Current Password</label>
+                      <label className="form-label text-black dark:text-white">Current Password</label>
                       <input
                         type="password"
                         name="currentPassword"
-                        className="form-input"
+                        className="form-input text-black dark:text-white"
                         value={passwordData.currentPassword}
                         onChange={handlePasswordChange}
                         placeholder="Enter current password"
                       />
                     </div>
                     <div>
-                      <label className="form-label">New Password</label>
+                      <label className="form-label text-black dark:text-white">New Password</label>
                       <input
                         type="password"
                         name="newPassword"
-                        className="form-input"
+                        className="form-input text-black dark:text-white"
                         value={passwordData.newPassword}
                         onChange={handlePasswordChange}
                         placeholder="Enter new password"
                       />
                     </div>
                     <div>
-                      <label className="form-label">Confirm New Password</label>
+                      <label className="form-label text-black dark:text-white">Confirm New Password</label>
                       <input
                         type="password"
                         name="confirmPassword"
-                        className="form-input"
+                        className="form-input text-black dark:text-white"
                         value={passwordData.confirmPassword}
                         onChange={handlePasswordChange}
                         placeholder="Confirm new password"
@@ -418,14 +370,14 @@ const ProfilePage = () => {
                     <div className="flex justify-end space-x-3">
                       <button
                         onClick={() => setIsChangingPassword(false)}
-                        className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                        className="px-4 py-2 text-black dark:text-white hover:text-gray-800 dark:hover:text-gray-200"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleChangePassword}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                        className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium transition-colors disabled:opacity-50"
                       >
                         Update Password
                       </button>
@@ -436,9 +388,9 @@ const ProfilePage = () => {
             </div>
 
             {/* Notification Preferences */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="bg-white dark:bg-black rounded-xl shadow-lg">
+              <div className="p-6 border-b border-black dark:border-white">
+                <h3 className="text-lg font-semibold text-black dark:text-white">
                   Notification Preferences
                 </h3>
               </div>
@@ -447,12 +399,12 @@ const ProfilePage = () => {
                   {Object.entries(notifications).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <Bell className="w-5 h-5 text-gray-400" />
+                        <Bell className="w-5 h-5 text-black dark:text-white" />
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white capitalize">
+                          <p className="font-medium text-black dark:text-white capitalize">
                             {key.replace(/([A-Z])/g, ' $1').trim()}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-black dark:text-white">
                             Receive notifications for {key.toLowerCase()} activities
                           </p>
                         </div>
@@ -460,11 +412,11 @@ const ProfilePage = () => {
                       <button
                         onClick={() => handleNotificationChange(key)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          value ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                          value ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-900'
                         }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
                             value ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
@@ -476,9 +428,9 @@ const ProfilePage = () => {
             </div>
 
             {/* App Preferences */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="bg-white dark:bg-black rounded-xl shadow-lg">
+              <div className="p-6 border-b border-black dark:border-white">
+                <h3 className="text-lg font-semibold text-black dark:text-white">
                   App Preferences
                 </h3>
               </div>
@@ -486,15 +438,15 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     {isDark ? (
-                      <Moon className="w-5 h-5 text-gray-400" />
+                      <Moon className="w-5 h-5 text-black" />
                     ) : (
-                      <Sun className="w-5 h-5 text-gray-400" />
+                      <Sun className="w-5 h-5 text-black" />
                     )}
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-black dark:text-white">
                         Dark Mode
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-black dark:text-white">
                         Switch between light and dark themes
                       </p>
                     </div>
@@ -502,11 +454,11 @@ const ProfilePage = () => {
                   <button
                     onClick={() => dispatch(toggleTheme())}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      isDark ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                      isDark ? 'bg-black' : 'bg-gray-200'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
                         isDark ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />

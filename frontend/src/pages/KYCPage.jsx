@@ -678,7 +678,7 @@ const KYCPage = () => {
 
               return (
                 <div key={step.id} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  <div className={`flex items-center justify-center w-12 h-10 rounded-full ${
                     isCompleted
                       ? 'bg-black text-white dark:bg-white dark:text-black'
                       : isActive

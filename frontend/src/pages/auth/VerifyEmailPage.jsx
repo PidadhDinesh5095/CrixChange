@@ -17,19 +17,15 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     if (token) {
+      console.log("Starting email verification with token:", token);
       handleVerification();
     }
   }, [token]);
 
-  useEffect(() => {
-    if (error) {
-      setVerificationStatus('error');
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
-
+  
   const handleVerification = async () => {
     try {
+      console.log("Dispatching verifyEmail with token:", token);
       const result = await dispatch(verifyEmail(token));
       if (verifyEmail.fulfilled.match(result)) {
         setVerificationStatus('success');

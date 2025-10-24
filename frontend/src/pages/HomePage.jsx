@@ -111,15 +111,15 @@ const HomePage = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-6xl md:text-8xl font-black text-black dark:text-white mb-8 tracking-tighter leading-none">
+            <h1 className="text-6xl md:text-[7rem] font-black text-black dark:text-white mb-8 tracking-tighter leading-none">
               CRIXCHANGE
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 max-w-4xl mx-auto font-light">
+            <p className="text-xl md:text-4xl text-gray-600 dark:text-gray-400 mb-12 max-w-5xl mx-auto mt-10 font-light">
               Professional sports securities exchange platform with institutional-grade infrastructure,
               real-time execution, and regulatory compliance.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 mt-16">
               <Link
                 to="/trading"
                 className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
@@ -135,7 +135,7 @@ const HomePage = () => {
               </Link>
             </div>
 
-            {/* Live Stats */}
+            {/* Live Stats 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
@@ -159,7 +159,7 @@ const HomePage = () => {
                   </motion.div>
                 );
               })}
-            </div>
+            </div>*/}
           </motion.div>
         </div>
       </section>
@@ -377,7 +377,7 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      {/* Market Status */}
+      {/* Market Status 
       <section className="py-20 bg-black dark:bg-white border-t border-white dark:border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -410,7 +410,7 @@ const HomePage = () => {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section>*/}
       {/* CTA Section */}
       <section className="py-20 bg-white dark:bg-black border-t border-gray-200 dark:border-white">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
