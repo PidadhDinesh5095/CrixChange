@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer';
 
 // Create transporter
+
 const createTransporter = () => {
-  return nodemailer.createTransporter({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+  return nodemailer.createTransport({
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: 'crixchangeindia@gmail.com',
+      pass: 'aipo ewoo rspl kzae'
     }
   });
 };
@@ -17,7 +18,7 @@ export const sendEmail = async (options) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
+      from: ` <dineshrao5095@gmail.com>`,
       to: options.email,
       subject: options.subject,
       html: options.message
@@ -243,10 +244,10 @@ export const emailTemplates = {
       <div style="padding: 30px; background: #f9fafb;">
         <h2 style="color: #1f2937;">Hello ${name},</h2>
         <p style="color: #4b5563; line-height: 1.6;">
-          ${status === 'completed' 
-            ? 'Your withdrawal has been successfully processed and transferred to your bank account.'
-            : 'Your withdrawal request has been received and is being processed.'
-          }
+          ${status === 'completed'
+      ? 'Your withdrawal has been successfully processed and transferred to your bank account.'
+      : 'Your withdrawal request has been received and is being processed.'
+    }
         </p>
         <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
           <h3 style="color: #f59e0b; margin: 0 0 10px 0;">₹${amount}</h3>
