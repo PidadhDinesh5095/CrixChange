@@ -68,87 +68,9 @@ project/
 
 ---
 
-## Setup & Installation
 
-### Prerequisites
 
-- Node.js (v18+ recommended)
-- npm or yarn
-- MongoDB (local or Atlas)
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/crixchange.git
-cd crixchange
-```
-
-### 2. Install dependencies
-
-#### Backend
-
-```bash
-cd backend
-npm install
-```
-
-#### Frontend
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 3. Configure environment variables
-
-#### Backend (`backend/.env`)
-
-```
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_jwt_secret
-FRONTEND_URL=http://localhost:5173
-EMAIL_USER=your_email@example.com
-EMAIL_PASS=your_email_password
-```
-
-#### Frontend (`frontend/.env`)
-
-```
-VITE_API_URL=http://localhost:5000/api
-```
-
-### 4. Start the servers
-
-#### Backend
-
-```bash
-cd backend
-npm run dev
-```
-
-#### Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
----
-
-## Scripts
-
-### Backend
-
-- `npm run dev` — Start backend with nodemon
-- `npm start` — Start backend
-
-### Frontend
-
-- `npm run dev` — Start frontend (Vite)
-- `npm run build` — Build frontend
-
----
 
 ## API Endpoints
 
@@ -222,13 +144,10 @@ npm run dev
 
 ---
 
-## License
-
-MIT License
-
----
+#
 
 ## Author
 
-CrixChange Team
+pidadh dinesh
+
 
