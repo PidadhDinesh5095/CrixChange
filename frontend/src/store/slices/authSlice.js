@@ -47,10 +47,9 @@ export const logout = createAsyncThunk(
       await authService.logout(token);
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
-      
       return true;
     } catch (error) {
-      // Even if logout fails on server, clear local storage
+    
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       console.log("Logout failed on server, but local tokens cleared");

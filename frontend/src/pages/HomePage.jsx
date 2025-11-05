@@ -86,7 +86,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black font-raleway">
-      {/* Live Market Ticker */}
+      {/* Live Market Ticker
       <div className="bg-black dark:bg-black text-white dark:text-white py-2 overflow-hidden border-b border-white dark:border-white">
         <div className="animate-ticker whitespace-nowrap">
           <span className="inline-flex items-center space-x-12 text-sm font-medium">
@@ -101,7 +101,7 @@ const HomePage = () => {
             ))}
           </span>
         </div>
-      </div>
+      </div> */}
       {/* Hero Section */}
       <section className="relative bg-white dark:bg-black">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
@@ -112,7 +112,7 @@ const HomePage = () => {
             className="text-center"
           >
             <h1 className="text-6xl md:text-[7rem] font-black text-black dark:text-white mb-8 tracking-tighter leading-none">
-              CRIXCHANGE
+              CRIXCHANGE<span className='text-red-500 ml-1'>.</span>
             </h1>
             <p className="text-xl md:text-4xl text-gray-600 dark:text-gray-400 mb-12 max-w-5xl mx-auto mt-10 font-light">
               Professional sports securities exchange platform with institutional-grade infrastructure,
@@ -176,7 +176,7 @@ const HomePage = () => {
             <h2 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-4 tracking-tight">
               PROFESSIONAL TERMINAL
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-light">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-grotesque">
               Advanced trading interface with real-time market data and institutional-grade execution
             </p>
           </motion.div>

@@ -20,6 +20,7 @@ import { logout } from '../../store/slices/authSlice';
 import { toggleTheme } from '../../store/slices/themeSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,17 +57,12 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-black shadow-lg border-b-2 border-black dark:border-white sticky top-0 z-50">
+    <header className="bg-white dark:bg-black shadow-lg  border-black dark:border-white sticky top-0 z-50 font-sans">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row items-center h-16 justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
-            <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white dark:text-black" />
-            </div>
-            <span className="text-2xl font-bold text-black dark:text-white tracking-tight">
-              CRIXCHANGE
-            </span>
+          <Link to="/" className="flex items-center space-x-3 mb-3 text-[2.6rem] font-bold flex-shrink-0">
+           <h1 c>Crixchange<span  className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
           </Link>
 
           {/* Desktop Navigation */}

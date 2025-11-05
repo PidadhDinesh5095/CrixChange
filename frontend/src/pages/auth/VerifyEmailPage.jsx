@@ -11,7 +11,7 @@ const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
-  
+
   const [verificationStatus, setVerificationStatus] = useState('verifying'); // verifying, success, error
   const [email, setEmail] = useState('');
 
@@ -22,7 +22,7 @@ const VerifyEmailPage = () => {
     }
   }, [token]);
 
-  
+
   const handleVerification = async () => {
     try {
       console.log("Dispatching verifyEmail with token:", token);
@@ -87,7 +87,7 @@ const VerifyEmailPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-center"
+            className="text-center font-sans"
           >
             <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-black dark:text-white" />
@@ -115,7 +115,7 @@ const VerifyEmailPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-center"
+            className="text-center font-sans"
           >
             <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-8 h-8 text-black dark:text-white" />
@@ -139,9 +139,8 @@ const VerifyEmailPage = () => {
               <button
                 onClick={handleResendVerification}
                 disabled={isLoading}
-                className={`w-full flex justify-center py-3 px-4 border border-black dark:border-white rounded-md shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-white dark:hover:bg-black hover:text-black dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full flex justify-center py-3 px-4 border border-black dark:border-white rounded-md shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-white dark:hover:bg-black hover:text-black dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {isLoading ? (
                   <div className="flex items-center">
@@ -168,17 +167,12 @@ const VerifyEmailPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen font-sans flex items-center justify-center bg-white dark:bg-black py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
-            <div className="w-12 h-12 bg-black dark:bg-white rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-8 h-8 text-white dark:text-black" />
-            </div>
-            <span className="text-3xl font-bold text-black dark:text-white">
-              CrixChange
-            </span>
+          <Link to="/" className="flex flex-row  justify-center space-x-3 mb-3 text-[3rem] font-bold flex-shrink-0">
+            <h1 c>Crixchange<span className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
           </Link>
         </div>
 

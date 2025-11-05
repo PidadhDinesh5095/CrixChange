@@ -43,7 +43,7 @@ ChartJS.register(
 const TEAM_LOGOS = {
   MI:  'https://www.iplcricketmatch.com/wp-content/uploads/2024/02/Mumbai-Indians.jpg',
   CSK: 'https://static.wixstatic.com/media/0293d4_0be320985f284973a119aaada3d6933f~mv2.jpg/v1/fill/w_980,h_680,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0293d4_0be320985f284973a119aaada3d6933f~mv2.jpg',
-  RCB: 'https://play-lh.googleusercontent.com/iCU8yMySowwEjcyg0UHTrT-DIJrL47xsKg5g4BNTFsKWy6NIncwprtG-vLQrMSlgwg=w240-h480-rw',
+  RCB: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvXE2C2mSX88OSXLUbcTB4X0CGfod7_OcI6g&s',
   DC:  'https://upload.wikimedia.org/wikipedia/en/thumb/2/2f/Delhi_Capitals.svg/1200px-Delhi_Capitals.svg.png',
   GT:  'https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Gujarat_Titans_Logo.svg/1200px-Gujarat_Titans_Logo.svg.png',
   RR:  'https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/This_is_the_logo_for_Rajasthan_Royals%2C_a_cricket_team_playing_in_the_Indian_Premier_League_%28IPL%29.svg/1200px-This_is_the_logo_for_Rajasthan_Royals%2C_a_cricket_team_playing_in_the_Indian_Premier_League_%28IPL%29.svg.png',

@@ -21,7 +21,7 @@ const LoginPage = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  
+
 
   const handleChange = (e) => {
     setFormData({
@@ -53,7 +53,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000] font-raleway flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white dark:bg-[#000] font-raleway flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-base sm:text-lg">
       <div className="max-w-md w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -62,18 +62,13 @@ const LoginPage = () => {
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white dark:text-black" />
-              </div>
-              <span className="text-2xl font-bold text-black dark:text-white tracking-tight">
-                CRIXCHANGE
-              </span>
+            <Link to="/" className="flex flex-row justify-center space-x-3  text-6xl font-bold flex-shrink-0">
+              <h1 >Crixchange<span className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
             </Link>
-            <h2 className="text-3xl font-bold text-black dark:text-[#fff] font-raleway">
+            <h2 className="text-4xl font-bold text-black dark:text-[#fff] font-raleway">
               Welcome back
             </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-[#fff] font-raleway">
+            <p className="mt-2 text-md text-gray-600 dark:text-[#fff] font-raleway">
               Sign in to your account to continue trading
             </p>
           </div>

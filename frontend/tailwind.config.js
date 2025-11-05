@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Raleway', 'system-ui', 'sans-serif'],
-        raleway: ['Raleway', 'sans-serif'],
+        sans: ['"Darker Grotesque"', 'system-ui', 'sans-serif'],
+        raleway: ['"Darker Grotesque"', 'sans-serif'],
       },
       colors: {
         primary: {

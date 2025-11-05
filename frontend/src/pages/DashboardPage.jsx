@@ -155,7 +155,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000] py-8">
+    <div className="min-h-screen bg-white dark:bg-[#000] py-8 font-sans">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div

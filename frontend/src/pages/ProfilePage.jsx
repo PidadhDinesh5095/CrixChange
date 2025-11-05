@@ -156,7 +156,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black py-8">
+    <div className="min-h-screen font-sans bg-white dark:bg-black py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -212,12 +212,7 @@ const ProfilePage = () => {
                     </button>
                   )}
                 </div>
-                <div className="text-sm text-black dark:text-white">
-                  Member since {new Date(user.createdAt).toLocaleDateString('en-IN', { 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                </div>
+                
               </div>
             </div>
           </motion.div>
@@ -254,7 +249,7 @@ const ProfilePage = () => {
                       <input
                         type="text"
                         name="firstName"
-                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
+                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-black' : ''}`}
                         value={profileData.firstName}
                         onChange={handleProfileChange}
                         disabled={!isEditing}
@@ -266,7 +261,7 @@ const ProfilePage = () => {
                     <input
                       type="text"
                       name="lastName"
-                      className={`form-input text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
+                      className={`form-input text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-black' : ''}`}
                       value={profileData.lastName}
                       onChange={handleProfileChange}
                       disabled={!isEditing}
@@ -279,7 +274,7 @@ const ProfilePage = () => {
                       <input
                         type="email"
                         name="email"
-                        className="form-input pl-10 text-black dark:text-white bg-gray-100 dark:bg-gray-900"
+                        className="form-input pl-10 text-black dark:text-white bg-gray-100 dark:bg-black"
                         value={profileData.email}
                         disabled
                       />
@@ -292,7 +287,7 @@ const ProfilePage = () => {
                       <input
                         type="tel"
                         name="phone"
-                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
+                        className={`form-input pl-10 text-black dark:text-white ${!isEditing ? 'bg-gray-100 dark:bg-black' : ''}`}
                         value={profileData.phone}
                         onChange={handleProfileChange}
                         disabled={!isEditing}

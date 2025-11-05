@@ -30,6 +30,8 @@ import KYCPage from './pages/KYCPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import NotFoundPage from './pages/NotFoundPage';
 import MatchPerformancePage from './pages/MatchPerformancePage';
+import PrivacyPolicy from './pages/privacy-policy';
+import TermsConditions from './pages/terms-conditions';
 
 // Styles
 import './App.css';
@@ -172,6 +174,14 @@ const AppContent = () => {
               <Route
                 path="/match-performance/:matchId"
                 element={<MatchPerformancePage />}
+              />
+               <Route
+                path="/privacy"
+                element={<PrivacyPolicy />}
+              />
+               <Route
+                path="/terms"
+                element={<TermsConditions />}
               />
 
               {/* Admin Routes */}
