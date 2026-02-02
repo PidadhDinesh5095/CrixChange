@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently  \"npm run client:dev\"",
+    "crix": "concurrently  \"npm run client:dev\"",
     "client:dev": "vite",
     "server:dev": "cd backend && npm run dev",
     "build": "vite build",

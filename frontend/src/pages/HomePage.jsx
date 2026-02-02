@@ -103,33 +103,37 @@ const HomePage = () => {
         </div>
       </div> */}
       {/* Hero Section */}
-      <section className="relative bg-white dark:bg-black">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
+      <section className="relative  bg-white dark:bg-black">
+        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-[750px] px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i')] bg-top bg-cover bg-center sm:px-6 lg:px-8 pt-24 pb-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center"
+            className="text-left"
           >
-            <h1 className="text-6xl md:text-[7rem] font-black text-black dark:text-white mb-8 tracking-tighter leading-none">
-              CRIXCHANGE<span className='text-red-500 ml-1'>.</span>
-            </h1>
-            <p className="text-xl md:text-4xl text-gray-600 dark:text-gray-400 mb-12 max-w-5xl mx-auto mt-10 font-light">
-              Professional sports securities exchange platform with institutional-grade infrastructure,
-              real-time execution, and regulatory compliance.
-            </p>
+            <div
+              className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
+            />
+            <div className="flex  flex-row sm:flex-col gap-6 justify-center  w-[50%]">
+              <div className="text-6xl md:text-[6rem] font-black z-20 text-white ml-12  tracking-tighter leading-none">
+                CSK<span className='text-orange-500  ml-1 '>vs</span>MI
+              </div>
+              <p className="text-xl ml-6 w-[200%] md:text-2xl z-10 text-center  text-white mb-12  mx-auto  font-light">
+                Start trading now with high performance.
+              </p>
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 mt-16">
+            <div className="flex  flex-col sm:flex-row gap-6 justify-start ml-6 ">
               <Link
                 to="/trading"
-                className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                className="inline-flex z-10 items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
               >
                 START TRADING
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Link>
               <Link
                 to="/analytics"
-                className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border border-black dark:border-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                className="inline-flex z-10 items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border border-black dark:border-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
                 VIEW ANALYTICS
               </Link>
@@ -205,8 +209,8 @@ const HomePage = () => {
                         <span className="text-black dark:text-white">₹{stock.price}</span>
                         <span
                           className={`${stock.change.startsWith('+')
-                              ? 'text-black dark:text-white'
-                              : 'text-white dark:text-black'
+                            ? 'text-black dark:text-white'
+                            : 'text-white dark:text-black'
                             }`}
                         >
                           {stock.change}%
@@ -283,8 +287,8 @@ const HomePage = () => {
                     {match.title}
                   </h3>
                   <span className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-bold ${match.status === 'LIVE'
-                      ? 'bg-black text-white dark:bg-white dark:text-black'
-                      : 'bg-gray-400 text-white dark:bg-gray-600 dark:text-white'
+                    ? 'bg-black text-white dark:bg-white dark:text-black'
+                    : 'bg-gray-400 text-white dark:bg-gray-600 dark:text-white'
                     }`}>
                     {match.status === 'LIVE' && <Play className="w-3 h-3 mr-1" />}
                     {match.status}
@@ -310,8 +314,8 @@ const HomePage = () => {
                           ₹{team.price.toFixed(2)}
                         </p>
                         <p className={`text-sm font-bold ${team.change >= 0
-                            ? 'text-black dark:text-white'
-                            : 'text-gray-600 dark:text-gray-400'
+                          ? 'text-black dark:text-white'
+                          : 'text-gray-600 dark:text-gray-400'
                           }`}>
                           {team.change >= 0 ? '+' : ''}{team.change.toFixed(1)}%
                         </p>
