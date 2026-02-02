@@ -32,7 +32,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import MatchPerformancePage from './pages/MatchPerformancePage';
 import PrivacyPolicy from './pages/privacy-policy';
 import TermsConditions from './pages/terms-conditions';
-
+import CricketTradingChart from '../src/components/layout/CustomChart.jsx';
 // Styles
 import './App.css';
 
@@ -173,7 +173,7 @@ const AppContent = () => {
               {/* Match Performance Route */}
               <Route
                 path="/match-performance/:matchId"
-                element={<MatchPerformancePage />}
+                element={<CricketTradingChart />}
               />
                <Route
                 path="/privacy"
@@ -237,7 +237,7 @@ const AppContent = () => {
 function App() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <AppContent/>
     </Provider>
   );
 }

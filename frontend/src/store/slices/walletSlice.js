@@ -12,7 +12,11 @@ const initialState = {
   error: null,
 };
 
+<<<<<<< HEAD
 // Async thunks
+=======
+
+>>>>>>> master
 export const getWalletBalance = createAsyncThunk(
   'wallet/getBalance',
   async (_, { rejectWithValue }) => {

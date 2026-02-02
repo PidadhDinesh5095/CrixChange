@@ -85,7 +85,11 @@ export const register = async (req, res) => {
   // Send verification email
   const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
   const message = `
+<<<<<<< HEAD
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
+=======
+    <div style="font-family: Darker Grotesque; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
+>>>>>>> master
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>
       <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Please click the button below to verify your email address:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
@@ -214,9 +218,13 @@ export const logout = async (req, res) => {
   console.log("User logged out successfully");
 };
 
+<<<<<<< HEAD
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private
+=======
+
+>>>>>>> master
 export const getMe = async (req, res) => {
   if (await isTokenBlacklisted(req)) {
     return res.status(401).json({ success: false, message: 'Token expired or blacklisted' });
@@ -231,9 +239,13 @@ export const getMe = async (req, res) => {
   });
 };
 
+<<<<<<< HEAD
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
+=======
+
+>>>>>>> master
 export const updateProfile = async (req, res) => {
   if (await isTokenBlacklisted(req)) {
     return res.status(401).json({ success: false, message: 'Token expired or blacklisted' });
@@ -477,7 +489,11 @@ export const verifyEmail = async (req, res) => {
     });
   } catch (error) {
     console.error('KYC email sending failed:', error);
+<<<<<<< HEAD
     // Do not fail verification if email fails
+=======
+    
+>>>>>>> master
   }
 
   res.json({

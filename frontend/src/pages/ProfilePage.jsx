@@ -184,6 +184,7 @@ const ProfilePage = () => {
             <div className="bg-white dark:bg-black rounded-xl shadow-lg p-6">
               <div className="text-center">
                 <div className="relative inline-block">
+<<<<<<< HEAD
                   <div className="w-24 h-24 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl font-bold text-white dark:text-black">
                       {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
@@ -192,6 +193,14 @@ const ProfilePage = () => {
                   <button className="absolute bottom-0 right-0 w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
                     <Camera className="w-4 h-4" />
                   </button>
+=======
+                  <div className="w-24 h-24 bg-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-4xl font-black text-white dark:text-black">
+                      {user.firstName?.charAt(0).toUpperCase()}{user.lastName?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  
+>>>>>>> master
                 </div>
                 <h3 className="text-xl font-semibold text-black dark:text-white">
                   {user.firstName} {user.lastName}

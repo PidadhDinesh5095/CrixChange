@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import mongoose from 'mongoose';
 
 const blacklistSchema = new mongoose.Schema({
@@ -16,3 +17,23 @@ const blacklistSchema = new mongoose.Schema({
 const Blacklist = mongoose.model('Blacklist', blacklistSchema);
 
 export default Blacklist;
+=======
+import mongoose from 'mongoose';
+
+const blacklistSchema = new mongoose.Schema({
+  token: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    expires: '1d' // Automatically remove after 1 day
+  }
+});
+
+const Blacklist = mongoose.model('Blacklist', blacklistSchema);
+
+export default Blacklist;
+>>>>>>> master

@@ -1,3 +1,8 @@
+<<<<<<< HEAD
 {
   "include": ["vite.config.js"]
+=======
+{
+  "include": ["vite.config.js"]
+>>>>>>> master
 }

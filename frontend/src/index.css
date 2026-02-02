@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* Import Darker Grotesque font weights you need */
+=======
+
+>>>>>>> master
 @import '@fontsource/darker-grotesque/400.css';
 @import '@fontsource/darker-grotesque/700.css';
 
@@ -6,7 +10,10 @@
 @tailwind components;
 @tailwind utilities;
 
+<<<<<<< HEAD
 /* Set global font family for Tailwind's font-sans utility */
+=======
+>>>>>>> master
 body {
   font-family: 'Darker Grotesque', sans-serif;
 }

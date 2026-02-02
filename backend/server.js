@@ -15,16 +15,28 @@ import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
+<<<<<<< HEAD
+=======
+import kycRoutes from './routes/kycRoutes.js';
+>>>>>>> master
 {/**import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import tradingRoutes from './routes/tradingRoutes.js';
 import sportsRoutes from './routes/sportsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+<<<<<<< HEAD
 import kycRoutes from './routes/kycRoutes.js';
+=======
+
+>>>>>>> master
 import paymentRoutes from './routes/paymentRoutes.js';
 
 // Load environment variables**/}
 dotenv.config();
+<<<<<<< HEAD
+=======
+console.log(process.env.FRONTEND_URL)
+>>>>>>> master
 
 // Create Express app
 const app = express();
@@ -60,8 +72,13 @@ app.use(cors({
 }));
 
 // Body parsing middleware
+<<<<<<< HEAD
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+=======
+app.use(express.json());
+
+>>>>>>> master
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -76,6 +93,10 @@ app.use((req, res, next) => {
 
 
 app.use('/api/auth', authRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/kyc', kycRoutes);
+>>>>>>> master
 // Remove this dummy GET route, it's not needed for registration
 // app.get('/register',(req,res)=>{res.send("Hello")});
 {/**

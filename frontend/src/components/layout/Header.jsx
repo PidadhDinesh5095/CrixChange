@@ -116,7 +116,11 @@ const Header = () => {
                 {/* Notifications */}
                 <button className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative">
                   <Bell className="w-5 h-5" />
+<<<<<<< HEAD
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-black dark:bg-white rounded-full"></span>
+=======
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+>>>>>>> master
                 </button>
 
                 {/* Profile Menu */}
@@ -125,12 +129,21 @@ const Header = () => {
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className="flex items-center space-x-2 p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
                   >
+<<<<<<< HEAD
                     <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
                       <span className="text-white dark:text-black text-sm font-bold">
                         {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                       </span>
                     </div>
                     <span className="hidden md:block text-sm font-bold">
+=======
+                    <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center">
+                      <span className="text-white dark:text-black text-md font-black">
+                        {user?.firstName?.charAt(0).toUpperCase()}{user?.lastName?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="hidden md:block text-md font-extrabold">
+>>>>>>> master
                       {user?.firstName} {user?.lastName}
                     </span>
                   </button>
