@@ -43,7 +43,7 @@ export const register = async (req, res) => {
     dateOfBirth,
     gender
   } = req.body;
- 
+
 
   // Check if user already exists
   const existingUser = await User.findOne({
@@ -85,11 +85,7 @@ export const register = async (req, res) => {
   // Send verification email
   const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
   const message = `
-<<<<<<< HEAD
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-=======
     <div style="font-family: Darker Grotesque; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
->>>>>>> master
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>
       <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Please click the button below to verify your email address:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
@@ -218,13 +214,6 @@ export const logout = async (req, res) => {
   console.log("User logged out successfully");
 };
 
-<<<<<<< HEAD
-// @desc    Get current user
-// @route   GET /api/auth/me
-// @access  Private
-=======
-
->>>>>>> master
 export const getMe = async (req, res) => {
   if (await isTokenBlacklisted(req)) {
     return res.status(401).json({ success: false, message: 'Token expired or blacklisted' });
@@ -239,13 +228,6 @@ export const getMe = async (req, res) => {
   });
 };
 
-<<<<<<< HEAD
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
-=======
-
->>>>>>> master
 export const updateProfile = async (req, res) => {
   if (await isTokenBlacklisted(req)) {
     return res.status(401).json({ success: false, message: 'Token expired or blacklisted' });
@@ -288,6 +270,7 @@ export const changePassword = async (req, res) => {
   if (await isTokenBlacklisted(req)) {
     return res.status(401).json({ success: false, message: 'Token expired or blacklisted' });
   }
+
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
@@ -315,6 +298,52 @@ export const changePassword = async (req, res) => {
 
   user.password = newPassword;
   await user.save();
+const changePasswordUrl = `http://localhost:5173/profile`;
+
+  const message = `
+    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">
+    Password Changed
+  </h1>
+
+  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
+    Your password was changed successfully.
+  </p>
+
+  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
+    If this wasn’t you, please secure your account immediately by changing your password using the link below.
+  </p>
+
+  <a href="${changePasswordUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px;">
+    Change Password
+  </a>
+
+  <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">
+    If you recognize this activity, no further action is required.
+  </p>
+
+  <div style="margin-top:32px; text-align:center;">
+    <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">
+      CRIXCHANGE
+    </span>
+  </div>
+</div>
+
+  `;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Changed- CrixChange',
+      message
+    });
+
+   
+  } catch (error) {
+    
+
+   console.log('Password change email sending failed:', error);
+  }
+
 
   res.json({
     success: true,
@@ -489,11 +518,7 @@ export const verifyEmail = async (req, res) => {
     });
   } catch (error) {
     console.error('KYC email sending failed:', error);
-<<<<<<< HEAD
-    // Do not fail verification if email fails
-=======
-    
->>>>>>> master
+
   }
 
   res.json({
@@ -538,7 +563,7 @@ export const resendVerification = async (req, res) => {
   await user.save();
 
   // Send verification email
- const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+  const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
   const message = `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>

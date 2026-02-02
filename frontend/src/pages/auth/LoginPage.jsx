@@ -48,11 +48,7 @@ const LoginPage = () => {
         toast.error('Login failed. Please check your credentials.');
       }
     } catch (error) {
-<<<<<<< HEAD
-      // Error is handled by the slice and shown via toast
-=======
       toast.error('Login failed. Please check your credentials.');
->>>>>>> master
     }
   };
 

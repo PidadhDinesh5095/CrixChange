@@ -18,11 +18,7 @@ export const sendEmail = async (options) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-<<<<<<< HEAD
-      from: ` <dineshrao5095@gmail.com>`,
-=======
       from: ` <crixchangeindia@gmail.com>`,
->>>>>>> master
       to: options.email,
       subject: options.subject,
       html: options.message
