@@ -1,8 +1,11 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect('mongodb+srv://23p61a05i7_db_user:6HNC8YBvnXw1qJ2v@crix.puqckeo.mongodb.net/crixchange', {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useUnifiedTopology: true,
       useNewUrlParser: true,
     });

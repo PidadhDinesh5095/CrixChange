@@ -151,7 +151,7 @@ export const resendVerification = createAsyncThunk(
   }
 );
 
-// Auth slice
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
