@@ -105,15 +105,16 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="relative  bg-white dark:bg-black">
         <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-[750px] px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i')] bg-top bg-cover bg-center sm:px-6 lg:px-8 pt-24 pb-32">
-          <motion.div
+          
+           <div
+              className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
+            /><motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-left"
           >
-            <div
-              className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
-            />
+           
             <div className="flex  flex-row sm:flex-col gap-6 justify-center  w-[50%]">
               <div className="text-6xl md:text-[6rem] font-black z-20 text-white ml-12  tracking-tighter leading-none">
                 CSK<span className='text-orange-500  ml-1 '>vs</span>MI
@@ -133,7 +134,7 @@ const HomePage = () => {
               </Link>
               <Link
                 to="/analytics"
-                className="inline-flex z-10 items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border border-black dark:border-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                className="inline-flex z-10 items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
                 VIEW ANALYTICS
               </Link>
