@@ -231,7 +231,7 @@ export default function CricketTradingChart() {
 		return result;
 	};
 
-	/* ---------------- CHART INIT ---------------- */
+	
 
 	useEffect(() => {
 		if (!chartContainerRef.current) return;
@@ -240,7 +240,7 @@ export default function CricketTradingChart() {
 
 		const chart = createChart(chartContainerRef.current, {
 			width: chartContainerRef.current.clientWidth,
-			height: 630,
+			height: window.innerHeight *0.78,
 			layout: {
 				background: { color: "#fff" },
 				textColor: "#000",
@@ -483,17 +483,7 @@ export default function CricketTradingChart() {
 
 				<button onClick={handleZoomIn}>+</button>
 				<button onClick={handleZoomOut}>-</button>
-
-				<div className="ml-auto text-sm">Zoom: {zoomLevel}%</div>
-			</div>
-			 <div
-                className={`flex flex-wrap items-center border-b px-2 py-2 gap-3 text-base sm:px-4 sm:gap-6 border-gray-200 bg-white text-black dark:border-gray-800 dark:bg-black dark:text-white`}
-                style={{
-                    fontFamily: "'Darker Grotesque', 'sans-serif'",
-                    zIndex: 50,
-                }}
-            >
-                <div>
+				<div>
                     <span className="text-black dark:text-white text-xs font-bold">O </span>
                     <span className={currentData.change >= 0 ? "text-[#26a69a] font-bold text-md" : "text-[#ef5350] font-bold text-md"}>{currentData.open.toFixed(1)}</span>
                 </div>
@@ -517,10 +507,18 @@ export default function CricketTradingChart() {
                         {currentData.change.toFixed(1)} ({currentData.changePercent.toFixed(2)}%)
                     </span>
                 </div>
-                <div className="ml-auto">
-                    <span className="text-[#848E9C]">Zoom: </span>
-                    <span>{zoomLevel}%</span>
-                </div>
+
+				<div className="ml-auto text-sm">Zoom: {zoomLevel}%</div>
+			</div>
+			 <div
+                className={`flex flex-wrap items-center border-b px-2 py-2 gap-3 text-base sm:px-4 sm:gap-6 border-gray-200 bg-white text-black dark:border-gray-800 dark:bg-black dark:text-white`}
+                style={{
+                    fontFamily: "'Darker Grotesque', 'sans-serif'",
+                    zIndex: 50,
+                }}
+            >
+                
+                
             </div>
 			<div ref={chartContainerRef} className="w-full flex-1" />
 		</div>

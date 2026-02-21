@@ -16,6 +16,7 @@ import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
+import walletRoutes from './routes/walletRoutes.js';
 {/**import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import tradingRoutes from './routes/tradingRoutes.js';
@@ -31,7 +32,7 @@ console.log(process.env.FRONTEND_URL)
 const app = express();
 const server = createServer(app);
 
-// Initialize Socket.IO
+
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -78,6 +79,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/kyc', kycRoutes);
+app.use('/api/wallet', walletRoutes);
 // Remove this dummy GET route, it's not needed for registration
 // app.get('/register',(req,res)=>{res.send("Hello")});
 {/**

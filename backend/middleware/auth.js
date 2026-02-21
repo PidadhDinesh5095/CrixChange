@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-const JWT_SECRET='crix';
+import dotenv from 'dotenv';
+
+dotenv.config();
+const JWT_SECRET=process.env.JWT_SECRET;
 
 // Protect routes - require authentication
 export const protect = async (req, res, next) => {

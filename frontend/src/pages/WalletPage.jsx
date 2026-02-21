@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Wallet, 
-  Plus, 
-  Minus, 
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { depositFunds } from '../store/slices/walletSlice';
+import {
+  Wallet,
+  Plus,
+  Minus,
   CreditCard,
   Smartphone,
   Building2,
@@ -15,14 +18,20 @@ import {
   XCircle
 } from 'lucide-react';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import toast from 'react-hot-toast';
 
 const WalletPage = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isLoading ,balance,frozenBalance,totalDeposited,totalWithdrawn} = useSelector((state) => state.wallet);
+
   const [walletData, setWalletData] = useState({
-    balance: 0,
-    frozenBalance: 0,
-    totalDeposited: 0,
-    totalWithdrawn: 0,
+    balance: balance || 0,
+    frozenBalance: frozenBalance || 0,  
+    totalDeposited: totalDeposited || 0, 
+    totalWithdrawn: totalWithdrawn || 0,
     transactions: []
   });
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -30,56 +39,7 @@ const WalletPage = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
 
-  useEffect(() => {
-    // Simulate loading wallet data
-    setTimeout(() => {
-      setWalletData({
-        balance: 25000,
-        frozenBalance: 5000,
-        totalDeposited: 75000,
-        totalWithdrawn: 15000,
-        transactions: [
-          {
-            id: 1,
-            type: 'deposit',
-            amount: 10000,
-            method: 'UPI',
-            status: 'completed',
-            date: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            reference: 'TXN123456789'
-          },
-          {
-            id: 2,
-            type: 'withdrawal',
-            amount: 5000,
-            method: 'Bank Transfer',
-            status: 'pending',
-            date: new Date(Date.now() - 4 * 60 * 60 * 1000),
-            reference: 'TXN123456788'
-          },
-          {
-            id: 3,
-            type: 'deposit',
-            amount: 15000,
-            method: 'Credit Card',
-            status: 'completed',
-            date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            reference: 'TXN123456787'
-          },
-          {
-            id: 4,
-            type: 'withdrawal',
-            amount: 8000,
-            method: 'Bank Transfer',
-            status: 'failed',
-            date: new Date(Date.now() - 48 * 60 * 60 * 1000),
-            reference: 'TXN123456786'
-          }
-        ]
-      });
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -128,15 +88,33 @@ const WalletPage = () => {
     );
   };
 
-  const handleDeposit = () => {
-    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+  const handleDeposit = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to deposit funds');
+      navigate('/login', { replace: true });
       return;
     }
-    // Simulate deposit process
-    console.log('Processing deposit:', {
-      amount: parseFloat(depositAmount),
-      method: selectedPaymentMethod
-    });
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    try {
+      const formData = {
+        amount: parseFloat(depositAmount),
+        method: selectedPaymentMethod
+      };
+      const result = await dispatch(depositFunds(formData));
+      if (depositFunds.fulfilled.match(result)) {
+        toast.success('Deposit successful!');
+      } else if (depositFunds.rejected.match(result)) {
+        toast.error(result.payload || 'Deposit failed. Please try again.');
+      }
+    }
+    catch (error) {
+      toast.error('Error occurred ');
+    }
+
+
   };
 
   const handleWithdraw = () => {
@@ -158,13 +136,7 @@ const WalletPage = () => {
     { id: 'netbanking', name: 'Net Banking', icon: Building2, description: 'Direct bank transfer' }
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading wallet..." />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen font-sans text-1xl bg-gray-50 dark:bg-[#000] py-8">
@@ -289,41 +261,37 @@ const WalletPage = () => {
           <div className="border-b border-gray-200 dark:border-[#fff]">
             <nav className="-mb-px flex space-x-8">
               <button
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  selectedTab === 'overview'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'overview'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
                 onClick={() => setSelectedTab('overview')}
               >
                 Overview
               </button>
               <button
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  selectedTab === 'deposit'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'deposit'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
                 onClick={() => setSelectedTab('deposit')}
               >
                 Deposit
               </button>
               <button
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  selectedTab === 'withdraw'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'withdraw'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
                 onClick={() => setSelectedTab('withdraw')}
               >
                 Withdraw
               </button>
               <button
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  selectedTab === 'history'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'history'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
                 onClick={() => setSelectedTab('history')}
               >
                 History
@@ -361,7 +329,7 @@ const WalletPage = () => {
                     </div>
                     <ArrowUpRight className="w-5 h-5 text-gray-400" />
                   </button>
-                  
+
                   <button
                     onClick={() => setSelectedTab('withdraw')}
                     className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
@@ -408,11 +376,10 @@ const WalletPage = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-medium text-sm ${
-                          transaction.type === 'deposit' 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
+                        <p className={`font-medium text-sm ${transaction.type === 'deposit'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                          }`}>
                           {transaction.type === 'deposit' ? '+' : '-'}{formatCurrency(transaction.amount)}
                         </p>
                         {getStatusBadge(transaction.status)}
@@ -430,7 +397,7 @@ const WalletPage = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-[#fff] mb-6">
                   Add Money to Wallet
                 </h3>
-                
+
                 <div className="space-y-6">
                   {/* Amount Input */}
                   <div>
@@ -473,11 +440,10 @@ const WalletPage = () => {
                         return (
                           <div
                             key={method.id}
-                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                              selectedPaymentMethod === method.id
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
+                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === method.id
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                              }`}
                             onClick={() => setSelectedPaymentMethod(method.id)}
                           >
                             <div className="flex items-center space-x-3">
@@ -501,13 +467,20 @@ const WalletPage = () => {
                   <button
                     onClick={handleDeposit}
                     disabled={!depositAmount || parseFloat(depositAmount) <= 0}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                      depositAmount && parseFloat(depositAmount) > 0
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${depositAmount && parseFloat(depositAmount) > 0
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      }`}
                   >
-                    Add ₹{depositAmount || '0'} to Wallet
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
+                        Processing deposit...
+                      </div>
+                    ) : (
+                      `Add ₹${depositAmount || '0'} to Wallet`
+                    )}
+
                   </button>
                 </div>
               </div>
@@ -520,7 +493,7 @@ const WalletPage = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-[#fff] mb-6">
                   Withdraw Money
                 </h3>
-                
+
                 <div className="space-y-6">
                   {/* Available Balance Info */}
                   <div className="bg-blue-50 dark:bg-[#111] rounded-lg p-4">
@@ -566,11 +539,10 @@ const WalletPage = () => {
                   <button
                     onClick={handleWithdraw}
                     disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (walletData.balance - walletData.frozenBalance)}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                      withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= (walletData.balance - walletData.frozenBalance)
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= (walletData.balance - walletData.frozenBalance)
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      }`}
                   >
                     Withdraw ₹{withdrawAmount || '0'}
                   </button>
@@ -632,11 +604,10 @@ const WalletPage = () => {
                           {transaction.method}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`text-sm font-medium ${
-                            transaction.type === 'deposit' 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-red-600 dark:text-red-400'
-                          }`}>
+                          <span className={`text-sm font-medium ${transaction.type === 'deposit'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                            }`}>
                             {transaction.type === 'deposit' ? '+' : '-'}{formatCurrency(transaction.amount)}
                           </span>
                         </td>

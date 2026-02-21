@@ -1,13 +1,15 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
+dotenv.config();
 // Create transporter
 
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    service: process.env.EMAIL_SERVICE,
     auth: {
-      user: 'crixchangeindia@gmail.com',
-      pass: 'aipo ewoo rspl kzae'
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
     }
   });
 };

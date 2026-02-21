@@ -33,6 +33,7 @@ export const login = createAsyncThunk(
       const response = await authService.login(credentials);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('refreshToken', response.data.refreshToken);
+      console.log("Login successful, response:", response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
