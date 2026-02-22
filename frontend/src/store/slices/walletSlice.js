@@ -37,9 +37,10 @@ export const depositFunds = createAsyncThunk(
         {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       } );
-      console.log('Deposit response:', response.data); // Debug log
+      console.log('Deposit response:', response.data); 
       return response.data;
     } catch (error) {
+      console.log('Deposit error:', error); // Debug log
       return rejectWithValue(error.response?.data?.message || 'Deposit failed');
     }
   }
@@ -52,6 +53,7 @@ export const withdrawFunds = createAsyncThunk(
       const response = await api.post('/wallet/withdraw', withdrawData);
       return response.data;
     } catch (error) {
+      console.log('Withdrawal error:', error); // Debug log
       return rejectWithValue(error.response?.data?.message || 'Withdrawal failed');
     }
   }
