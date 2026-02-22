@@ -101,17 +101,7 @@ export const register = async (req, res) => {
     </div>
   `;
 
-  try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Verify Your Email - CrixChange',
-      message
-    });
-  } catch (error) {
-    console.error('Email sending failed:', error);
-    // Don't fail registration if email fails
-  }
-
+  
   const token = generateToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
   console.log("User registered successfully");
@@ -134,6 +124,17 @@ export const register = async (req, res) => {
       }
     }
   });
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Verify Your Email - CrixChange',
+      message
+    });
+  } catch (error) {
+    console.error('Email sending failed:', error);
+    // Don't fail registration if email fails
+  }
+
 };
 
 // @desc    Login user
@@ -332,7 +333,14 @@ const changePasswordUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"
 </div>
 
   `;
-  try {
+ 
+
+
+  res.json({
+    success: true,
+    message: 'Password changed successfully'
+  });
+   try {
     await sendEmail({
       email: user.email,
       subject: 'Password Changed- CrixChange',
@@ -345,12 +353,6 @@ const changePasswordUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"
 
    console.log('Password change email sending failed:', error);
   }
-
-
-  res.json({
-    success: true,
-    message: 'Password changed successfully'
-  });
 };
 
 // @desc    Forgot password
@@ -398,15 +400,16 @@ export const forgotPassword = async (req, res) => {
   `;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Password Reset - CrixChange',
-      message
-    });
+    
 
     res.json({
       success: true,
       message: 'Password reset email sent'
+    });
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Reset - CrixChange',
+      message
     });
   } catch (error) {
     user.resetPasswordToken = undefined;
@@ -512,6 +515,12 @@ export const verifyEmail = async (req, res) => {
       </div>
     </div>
   `;
+  
+
+  res.json({
+    success: true,
+    message: 'Email verified successfullyy'
+  });
   try {
     await sendEmail({
       email: user.email,
@@ -522,11 +531,6 @@ export const verifyEmail = async (req, res) => {
     console.error('KYC email sending failed:', error);
 
   }
-
-  res.json({
-    success: true,
-    message: 'Email verified successfullyy'
-  });
 };
 
 // @desc    Resend verification email
@@ -582,15 +586,16 @@ export const resendVerification = async (req, res) => {
   `;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Verify Your Email - CrixChange',
-      message
-    });
+   
 
     res.json({
       success: true,
       message: 'Verification email sent'
+    });
+     await sendEmail({
+      email: user.email,
+      subject: 'Verify Your Email - CrixChange',
+      message
     });
   } catch (error) {
     return res.status(500).json({

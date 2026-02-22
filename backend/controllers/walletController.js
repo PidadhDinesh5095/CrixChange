@@ -21,11 +21,7 @@ export const depositFunds = async (req, res) => {
       throw error;
       
     }
-    try {
-      await sendDepositConfirmationEmail(req.user.email, req.user.firstName, amount, paymentMethod);
-    } catch (error) {
-      console.error('Error sending deposit confirmation email:', error);
-    }
+    
     // Fetch top 10 latest deposit/withdrawal transactions
     const transactions = await Transaction.find({
       userId: req.user.id,
@@ -40,6 +36,11 @@ export const depositFunds = async (req, res) => {
       wallet,
       transactions
     });
+    try {
+      await sendDepositConfirmationEmail(req.user.email, req.user.firstName, amount, paymentMethod);
+    } catch (error) {
+      console.error('Error sending deposit confirmation email:', error);
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -99,12 +100,7 @@ export const withdrawFunds = async (req, res) => {
       console.error('Error debiting wallet:', error);
       throw error;
     }
-    try {
-      await sendWithdrawalConfirmationEmail(req.user.email, req.user.firstName, amount, 'completed');
-    }
-    catch (error) {
-      console.error('Error sending withdrawal confirmation email:', error);
-    }
+    
     // Fetch top 10 latest deposit/withdrawal transactions
     const transactions = await Transaction.find({
       userId: req.user.id,
@@ -119,6 +115,12 @@ export const withdrawFunds = async (req, res) => {
       wallet,
       transactions
     });
+    try {
+      await sendWithdrawalConfirmationEmail(req.user.email, req.user.firstName, amount, 'completed');
+    }
+    catch (error) {
+      console.error('Error sending withdrawal confirmation email:', error);
+    }
   } catch (error) {
     res.status(500).json({
       success: false,

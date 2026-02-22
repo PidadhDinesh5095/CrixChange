@@ -275,7 +275,15 @@ console.log('Normalized KYC Data:', kycData);
     await User.findByIdAndUpdate(userId, { kycStatus: 'approved' });
 
     // 8. Send approval email
-    try {
+   
+
+    res.json({
+      success: true,
+      message: 'KYC submitted successfully',
+      status: 'submitted',
+      data: kycData
+    });
+     try {
       await sendEmail({
         email: user.email,
         subject: 'KYC Approved - Start Trading!',
@@ -294,13 +302,6 @@ console.log('Normalized KYC Data:', kycData);
     } catch (e) {
       // Don't fail if email fails
     }
-
-    res.json({
-      success: true,
-      message: 'KYC submitted successfully',
-      status: 'submitted',
-      data: kycData
-    });
     console.log('email sent ');
   } catch (error) {
     console.log('Submission error:', error);
