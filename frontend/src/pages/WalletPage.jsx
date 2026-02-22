@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { depositFunds } from '../store/slices/walletSlice';
+import { depositFunds, getWalletBalance, withdrawFunds, getTransactionHistory } from '../store/slices/walletSlice';
+
+
+ 
 import {
   Wallet,
   Plus,
@@ -19,26 +22,74 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
+import { use } from 'react';
 
 const WalletPage = () => {
+   const [visibleTransactions, setVisibleTransactions] = useState(10);
+  const tableEndRef = useRef(null);
+  const [selectedTab, setSelectedTab] = useState('overview');
+  
+
+  // Infinite scroll effect
+  
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const { isLoading ,balance,frozenBalance,totalDeposited,totalWithdrawn} = useSelector((state) => state.wallet);
+  const { isLoading ,isDepositing,isWithdrawing,balance,frozenBalance,totalDeposited,totalWithdrawn,transactions} = useSelector((state) => state.wallet);
+  
+  
 
   const [walletData, setWalletData] = useState({
-    balance: balance || 0,
-    frozenBalance: frozenBalance || 0,  
-    totalDeposited: totalDeposited || 0, 
-    totalWithdrawn: totalWithdrawn || 0,
+    balance:  0,
+    frozenBalance:  0,  
+    totalDeposited:  0, 
+    totalWithdrawn:  0,
     transactions: []
   });
-  const [selectedTab, setSelectedTab] = useState('overview');
+  
+  useEffect(() => {
+    console.log('WalletPage mounted, fetching wallet balance...');
+    if (isAuthenticated) {
+      dispatch(getWalletBalance());
+    }
+  }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if(balance !== undefined && frozenBalance !== undefined && totalDeposited !== undefined && totalWithdrawn !== undefined){
+      setWalletData({
+        balance: balance,
+        frozenBalance: frozenBalance,
+        totalDeposited: totalDeposited,
+        totalWithdrawn: totalWithdrawn,
+        transactions: transactions || []
+      });
+    }
+  },[balance,frozenBalance,totalDeposited,totalWithdrawn,transactions]);
+  
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
-
+useEffect(() => {
+    if (selectedTab === 'history') {
+      const handleScroll = () => {
+        if (tableEndRef.current) {
+          const { bottom } = tableEndRef.current.getBoundingClientRect();
+          if (bottom <= window.innerHeight + 100) {
+            // Load 1 more transaction if available
+            if (visibleTransactions < walletData.transactions.length) {
+              setVisibleTransactions((prev) => prev + 1);
+            } else if (walletData.transactions.length >= visibleTransactions) {
+              // Fetch more from backend if available
+              dispatch(getTransactionHistory({ skip: walletData.transactions.length, limit: 1 }));
+            }
+          }
+        }
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [selectedTab, visibleTransactions, walletData.transactions.length, dispatch]);
   
 
   const formatCurrency = (amount) => {
@@ -51,6 +102,9 @@ const WalletPage = () => {
   };
 
   const formatDateTime = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'N/A';
     return new Intl.DateTimeFormat('en-IN', {
       day: '2-digit',
       month: 'short',
@@ -58,7 +112,7 @@ const WalletPage = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
-    }).format(date);
+    }).format(d);
   };
 
   const getStatusIcon = (status) => {
@@ -94,14 +148,18 @@ const WalletPage = () => {
       navigate('/login', { replace: true });
       return;
     }
-    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+    if (!depositAmount  ) {
       toast.error('Please fill in all fields');
+      return;
+    }
+    if(parseFloat(depositAmount) <= 0 || parseFloat(depositAmount) > 1000000){
+      toast.error('Please enter a valid deposit amount (between ₹1 and ₹1,00,000)');
       return;
     }
     try {
       const formData = {
         amount: parseFloat(depositAmount),
-        method: selectedPaymentMethod
+        paymentMethod: selectedPaymentMethod
       };
       const result = await dispatch(depositFunds(formData));
       if (depositFunds.fulfilled.match(result)) {
@@ -117,17 +175,32 @@ const WalletPage = () => {
 
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      toast.error('Please enter a valid withdrawal amount');
       return;
     }
     if (parseFloat(withdrawAmount) > walletData.balance - walletData.frozenBalance) {
+      toast.error('Insufficient funds');
       return;
     }
-    // Simulate withdrawal process
-    console.log('Processing withdrawal:', {
-      amount: parseFloat(withdrawAmount)
-    });
+    const formData = {
+      amount: parseFloat(withdrawAmount),
+    };
+    try {
+      console.log('Dispatching withdrawFunds with:', formData);//debug log
+      const result = await dispatch(withdrawFunds(formData));
+      if (withdrawFunds.fulfilled.match(result)) {
+        toast.success('Withdrawal successful!');
+      } else if (withdrawFunds.rejected.match(result)) {
+        toast.error(result.payload || 'Withdrawal failed. Please try again.');
+      }
+    }
+    catch (error) {
+      toast.error('Error occurred during withdrawal process');
+    }
+    
+    
   };
 
   const paymentMethods = [
@@ -137,7 +210,13 @@ const WalletPage = () => {
   ];
 
 
-
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading wallet..." />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen font-sans text-1xl bg-gray-50 dark:bg-[#000] py-8">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -466,13 +545,15 @@ const WalletPage = () => {
                   {/* Deposit Button */}
                   <button
                     onClick={handleDeposit}
-                    disabled={!depositAmount || parseFloat(depositAmount) <= 0}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${depositAmount && parseFloat(depositAmount) > 0
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    disabled={isDepositing || !depositAmount || parseFloat(depositAmount) <= 0}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${isDepositing
+                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : depositAmount && parseFloat(depositAmount) > 0
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                       }`}
                   >
-                    {isLoading ? (
+                    {isDepositing ? (
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
                         Processing deposit...
@@ -480,7 +561,6 @@ const WalletPage = () => {
                     ) : (
                       `Add ₹${depositAmount || '0'} to Wallet`
                     )}
-
                   </button>
                 </div>
               </div>
@@ -538,13 +618,22 @@ const WalletPage = () => {
                   {/* Withdraw Button */}
                   <button
                     onClick={handleWithdraw}
-                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (walletData.balance - walletData.frozenBalance)}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= (walletData.balance - walletData.frozenBalance)
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (walletData.balance - walletData.frozenBalance)}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${isWithdrawing
+                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= (walletData.balance - walletData.frozenBalance)
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                       }`}
                   >
-                    Withdraw ₹{withdrawAmount || '0'}
+                    {isWithdrawing ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
+                        Processing withdrawal...
+                      </div>
+                    ) : (
+                      `Withdraw ₹${withdrawAmount || '0'}`
+                    )}
                   </button>
                 </div>
               </div>
@@ -583,42 +672,49 @@ const WalletPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-[#000] divide-y divide-gray-200 dark:divide-[#fff]">
-                    {walletData.transactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {formatDateTime(transaction.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {transaction.type === 'deposit' ? (
-                              <ArrowDownLeft className="w-4 h-4 text-green-600 dark:text-green-400 mr-2" />
-                            ) : (
-                              <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400 mr-2" />
-                            )}
-                            <span className="text-sm text-gray-900 dark:text-white capitalize">
-                              {transaction.type}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {transaction.method}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`text-sm font-medium ${transaction.type === 'deposit'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                            }`}>
-                            {transaction.type === 'deposit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(transaction.status)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {transaction.reference}
-                        </td>
+                    {walletData.transactions.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="text-center py-8 text-gray-500 dark:text-gray-300">No transactions found</td>
                       </tr>
-                    ))}
+                    ) : (
+                      walletData.transactions.slice(0, visibleTransactions).map((transaction) => (
+                        <tr key={transaction._id || transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {formatDateTime(transaction.createdAt || transaction.date)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {transaction.type === 'credit' ? (
+                                <ArrowDownLeft className="w-4 h-4 text-green-600 dark:text-green-400 mr-2" />
+                              ) : (
+                                <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400 mr-2" />
+                              )}
+                              <span className="text-sm text-gray-900 dark:text-white capitalize">
+                                {transaction.type}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {transaction.paymentMethod}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`text-sm font-medium ${transaction.type === 'credit'
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                              }`}>
+                              {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(transaction.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {transaction.reference}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                    <tr ref={tableEndRef}></tr>
                   </tbody>
                 </table>
               </div>

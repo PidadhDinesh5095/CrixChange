@@ -1,3 +1,4 @@
+import { stat } from 'fs';
 import mongoose from 'mongoose';
 
 const walletSchema = new mongoose.Schema({
@@ -86,6 +87,7 @@ walletSchema.methods.debit = async function(amount, description = '') {
     throw new Error('Insufficient balance');
   }
   this.balance -= amount;
+  this.totalWithdrawn += amount;
   await this.save();
   
   // Create transaction record
@@ -95,22 +97,30 @@ walletSchema.methods.debit = async function(amount, description = '') {
     type: 'debit',
     amount,
     description,
+    status: 'completed',
+    paymentMethod: 'Bank Transfer', // Assuming bank transfer for withdrawals, can be modified as needed
     balanceAfter: this.balance
   });
 };
 
 // Method to credit balance
-walletSchema.methods.credit = async function(amount, description = '') {
+walletSchema.methods.credit = async function(amount, paymentMethod, description = '') {
   this.balance += amount;
+  console.log('Crediting wallet with amount:', amount); // Debug log
+  console.log('New balance after credit:', this.balance); // Debug log
+  console.log('totalDeposited before credit:', this.totalDeposited); // Debug log
+  this.totalDeposited += amount;
+  console.log('totalDeposited after credit:', this.totalDeposited); // Debug log
   await this.save();
-  
-  // Create transaction record
+
   await mongoose.model('Transaction').create({
     userId: this.userId,
     walletId: this._id,
     type: 'credit',
     amount,
     description,
+    status: 'completed',
+    paymentMethod,
     balanceAfter: this.balance
   });
 };
