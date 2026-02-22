@@ -92,6 +92,9 @@ app.use('/api/kyc', kycRoutes);
 app.use('/api/payments', paymentRoutes);**/}
 
 // Health check endpoint
+app.get('/', (req, res) => {
+  res.send('Welcome to the Betting Platform API');
+});
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'OK',

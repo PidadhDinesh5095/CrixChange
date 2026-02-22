@@ -5,6 +5,8 @@ import Blacklist from '../models/Blacklist.js'; // import Blacklist model
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { validateRegister, validateLogin } from '../utils/validation.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // @desc    Register new user
 // @route   POST /api/auth/register
@@ -83,7 +85,7 @@ export const register = async (req, res) => {
   await user.save();
 
   // Send verification email
-  const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+  const verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${verificationToken}`;
   const message = `
     <div style="font-family: Darker Grotesque; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>
@@ -298,7 +300,7 @@ export const changePassword = async (req, res) => {
 
   user.password = newPassword;
   await user.save();
-const changePasswordUrl = `http://localhost:5173/profile`;
+const changePasswordUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/profile`;
 
   const message = `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
@@ -378,7 +380,7 @@ export const forgotPassword = async (req, res) => {
   await user.save();
 
   // Create reset URL
-  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+  const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
 
   const message = `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
@@ -496,7 +498,7 @@ export const verifyEmail = async (req, res) => {
   await user.save();
 
   // Send KYC completion email
-  const kycUrl = `http://localhost:5173/kyc`;
+  const kycUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/kyc`;
   const kycMessage = `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Complete Your KYC</h1>
@@ -563,7 +565,7 @@ export const resendVerification = async (req, res) => {
   await user.save();
 
   // Send verification email
-  const verificationUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+  const verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${verificationToken}`;
   const message = `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>

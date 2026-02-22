@@ -283,7 +283,7 @@ console.log('Normalized KYC Data:', kycData);
           <div style="font-family: Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto;">
             <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">KYC Approved!</h1>
             <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Congratulations! Your KYC has been approved. You can now start trading on CrixChange.</p>
-            <a href="http://localhost:5173/dashboard" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; margin-bottom: 24px;">Start Trading</a>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; margin-bottom: 24px;">Start Trading</a>
             <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">If you have any questions, contact support.</p>
             <div style="margin-top:32px; text-align:center;">
               <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
