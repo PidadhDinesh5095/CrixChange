@@ -3,7 +3,7 @@ import Transaction from '../models/Transaction.js';
 import { sendDepositConfirmationEmail, sendWithdrawalConfirmationEmail } from '../utils/sendEmail.js';
 export const depositFunds = async (req, res) => {
   try {
-    console.log('Deposit request received:', req.body); // Debug log
+
     const { amount, paymentMethod } = req.body;
 
     const wallet = await Wallet.findOne({ userId: req.user.id });
@@ -19,16 +19,18 @@ export const depositFunds = async (req, res) => {
     } catch (error) {
       console.error('Error crediting wallet:', error);
       throw error;
-      
+
     }
-    
+
     // Fetch top 10 latest deposit/withdrawal transactions
+
     const transactions = await Transaction.find({
       userId: req.user.id,
-      type: { $in: ['deposit', 'withdrawal'] }
+      type: { $in: ['credit', 'debit'] }
     })
       .sort({ createdAt: -1 })
       .limit(10);
+
 
     res.status(200).json({
       success: true,
@@ -64,6 +66,7 @@ export const getWalletBalance = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .limit(10);
+
     res.status(200).json({
       success: true,
       message: 'Wallet balance retrieved successfully',
@@ -100,7 +103,7 @@ export const withdrawFunds = async (req, res) => {
       console.error('Error debiting wallet:', error);
       throw error;
     }
-    
+
     // Fetch top 10 latest deposit/withdrawal transactions
     const transactions = await Transaction.find({
       userId: req.user.id,
@@ -129,4 +132,33 @@ export const withdrawFunds = async (req, res) => {
     });
   }
 
+};
+export const getTransactionHistory = async (req, res) => {
+  try {
+    const { skip, limit } = req.query;
+    const totalTransactions = await Transaction.countDocuments({
+      userId: req.user.id
+    });
+    
+    const transactions = await Transaction.find({
+      userId: req.user.id,
+      type: { $in: ['credit', 'debit'] }
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Transaction history retrieved successfully',
+      transactions,
+      totalTransactions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving transaction history',
+      error: error.message
+    });
+  }
 };

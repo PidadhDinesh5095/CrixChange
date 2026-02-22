@@ -11,6 +11,8 @@ const initialState = {
   isLoading: false,
   isDepositing: false,
   isWithdrawing: false,
+  totalTransactions: 0,
+  isgettingTransactions: false,
   error: null,
 };
 
@@ -145,16 +147,18 @@ const walletSlice = createSlice({
 
       // Get transaction history
       .addCase(getTransactionHistory.pending, (state) => {
-        state.isLoading = true;
+        state.isgettingTransactions = true;
         state.error = null;
       })
       .addCase(getTransactionHistory.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.transactions = action.payload.data.transactions;
+        state.isgettingTransactions = false;
+        state.transactions.push(...action.payload.transactions);
+        state.totalTransactions = action.payload.totalTransactions || state.totalTransactions;
+        
         state.error = null;
       })
       .addCase(getTransactionHistory.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isgettingTransactions = false;
         state.error = action.payload;
       });
   },

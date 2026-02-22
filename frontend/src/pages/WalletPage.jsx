@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { depositFunds, getWalletBalance, withdrawFunds, getTransactionHistory } from '../store/slices/walletSlice';
 
 
- 
+
 import {
   Wallet,
   Plus,
@@ -25,29 +25,28 @@ import toast from 'react-hot-toast';
 import { use } from 'react';
 
 const WalletPage = () => {
-   const [visibleTransactions, setVisibleTransactions] = useState(10);
   const tableEndRef = useRef(null);
   const [selectedTab, setSelectedTab] = useState('overview');
-  
+
 
   // Infinite scroll effect
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const { isLoading ,isDepositing,isWithdrawing,balance,frozenBalance,totalDeposited,totalWithdrawn,transactions} = useSelector((state) => state.wallet);
-  
-  
+  const { isLoading, isDepositing, isWithdrawing, balance, frozenBalance, totalDeposited, totalWithdrawn, transactions, isgettingTransactions, totalTransactions } = useSelector((state) => state.wallet);
+
+
 
   const [walletData, setWalletData] = useState({
-    balance:  0,
-    frozenBalance:  0,  
-    totalDeposited:  0, 
-    totalWithdrawn:  0,
+    balance: 0,
+    frozenBalance: 0,
+    totalDeposited: 0,
+    totalWithdrawn: 0,
     transactions: []
   });
-  
+
   useEffect(() => {
     console.log('WalletPage mounted, fetching wallet balance...');
     if (isAuthenticated) {
@@ -56,7 +55,7 @@ const WalletPage = () => {
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
-    if(balance !== undefined && frozenBalance !== undefined && totalDeposited !== undefined && totalWithdrawn !== undefined){
+    if (balance !== undefined && frozenBalance !== undefined && totalDeposited !== undefined && totalWithdrawn !== undefined) {
       setWalletData({
         balance: balance,
         frozenBalance: frozenBalance,
@@ -65,32 +64,13 @@ const WalletPage = () => {
         transactions: transactions || []
       });
     }
-  },[balance,frozenBalance,totalDeposited,totalWithdrawn,transactions]);
-  
+  }, [balance, frozenBalance, totalDeposited, totalWithdrawn, transactions]);
+
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
-useEffect(() => {
-    if (selectedTab === 'history') {
-      const handleScroll = () => {
-        if (tableEndRef.current) {
-          const { bottom } = tableEndRef.current.getBoundingClientRect();
-          if (bottom <= window.innerHeight + 100) {
-            // Load 1 more transaction if available
-            if (visibleTransactions < walletData.transactions.length) {
-              setVisibleTransactions((prev) => prev + 1);
-            } else if (walletData.transactions.length >= visibleTransactions) {
-              // Fetch more from backend if available
-              dispatch(getTransactionHistory({ skip: walletData.transactions.length, limit: 1 }));
-            }
-          }
-        }
-      };
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
-    }
-  }, [selectedTab, visibleTransactions, walletData.transactions.length, dispatch]);
-  
+
+
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -148,11 +128,11 @@ useEffect(() => {
       navigate('/login', { replace: true });
       return;
     }
-    if (!depositAmount  ) {
+    if (!depositAmount) {
       toast.error('Please fill in all fields');
       return;
     }
-    if(parseFloat(depositAmount) <= 0 || parseFloat(depositAmount) > 1000000){
+    if (parseFloat(depositAmount) <= 0 || parseFloat(depositAmount) > 1000000) {
       toast.error('Please enter a valid deposit amount (between ₹1 and ₹1,00,000)');
       return;
     }
@@ -199,8 +179,8 @@ useEffect(() => {
     catch (error) {
       toast.error('Error occurred during withdrawal process');
     }
-    
-    
+
+
   };
 
   const paymentMethods = [
@@ -677,7 +657,7 @@ useEffect(() => {
                         <td colSpan="6" className="text-center py-8 text-gray-500 dark:text-gray-300">No transactions found</td>
                       </tr>
                     ) : (
-                      walletData.transactions.slice(0, visibleTransactions).map((transaction) => (
+                      walletData.transactions.map((transaction) => (
                         <tr key={transaction._id || transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                             {formatDateTime(transaction.createdAt || transaction.date)}
@@ -717,6 +697,28 @@ useEffect(() => {
                     <tr ref={tableEndRef}></tr>
                   </tbody>
                 </table>
+                {/* Load More Button */}
+                <div className="flex justify-center py-4">
+                  <button
+                    disabled={isgettingTransactions }
+
+                    className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors ${walletData.transactions.length >= totalTransactions && walletData.transactions.length!=10 ? 'cursor-not-allowed opacity-50' : ''}`}
+                    onClick={() => {
+                      dispatch(getTransactionHistory({ skip: walletData.transactions.length, limit: 10 }));
+                    }}
+                  >
+                    {isgettingTransactions ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
+                        Loading more transactions...
+                      </div>
+                    ) : walletData.transactions.length >= totalTransactions && walletData.transactions.length!=10 ? (
+                      "No more transactions"
+                    ) : (
+                      "Load More Transactions"
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
