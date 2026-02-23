@@ -246,7 +246,7 @@ const DashboardPage = () => {
               </div>
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dashboardData.portfolio.todaysPnL >= 0 ? 'bg-black dark:bg-[#fff]' : 'bg-gray-400 dark:bg-gray-600'}`}>
                 {dashboardData.portfolio.todaysPnL >= 0 ? (
-                  <TrendingUp className="w-6 h-6 text-white dark:text-[#000]" />
+                  <TrendingUp className="w-6 h-6 text-[#008F75] dark:text-[#008F75]" />
                 ) : (
                   <TrendingDown className="w-6 h-6 text-white dark:text-[#000]" />
                 )}

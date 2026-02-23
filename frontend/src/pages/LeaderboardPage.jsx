@@ -464,7 +464,7 @@ const LeaderboardPage = () => {
                     </p>
                   </div>
                   <div className="text-center p-4 bg-green-50 dark:bg-[#111] rounded-lg">
-                    <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                    <TrendingUp className="w-8 h-8 text-[#008F75] dark:text-[#008F75] mx-auto mb-2" />
                     <p className="text-sm font-medium text-gray-900 dark:text-[#fff]">
                       Profit Maker
                     </p>

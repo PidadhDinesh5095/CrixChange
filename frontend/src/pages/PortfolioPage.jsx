@@ -238,7 +238,7 @@ const PortfolioPage = () => {
               </div>
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${portfolioData.summary.totalPnL >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'}`}>
                 {portfolioData.summary.totalPnL >= 0 ? (
-                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <TrendingUp className="w-6 h-6 text-[#008F75] dark:text-[#008F75]" />
                 ) : (
                   <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
                 )}

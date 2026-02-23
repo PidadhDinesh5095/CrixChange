@@ -274,7 +274,7 @@ const TradingPage = () => {
                         team.change >= 0 ? 'text-black dark:text-[#fff]' : 'text-gray-600 dark:text-gray-400'
                       }`}>
                         {team.change >= 0 ? (
-                          <TrendingUp className="w-4 h-4 mr-1" />
+                          <TrendingUp className="w-4 h-4 mr-1 text-[#008F75]" />
                         ) : (
                           <TrendingDown className="w-4 h-4 mr-1" />
                         )}
