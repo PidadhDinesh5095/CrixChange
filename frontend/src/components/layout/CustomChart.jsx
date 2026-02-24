@@ -85,33 +85,204 @@ export default function CricketTradingChart() {
 		type: null,
 	});
 	const [orderQty, setOrderQty] = useState(1);
-	const selectedTeam = IPL_TEAMS[2];
+
+	// Team selection state
+	const [selectedTeamId, setSelectedTeamId] = useState(IPL_TEAMS[2].id);
+	const selectedTeam = IPL_TEAMS.find(t => t.id === selectedTeamId);
+
+	// Unified event array for both teams (persisted in localStorage)
+	const [allEvents, setAllEvents] = useState(() => {
+		const data = localStorage.getItem('allEvents');
+		return data ? JSON.parse(data) : [];
+	});
+
+	// Utility: get opposite event (inverse price change)
+	function getOppositeEvent(eventObj) {
+		// Invert price change, keep label
+		return { ...eventObj, value: -eventObj.value };
+	}
 
 	/* ---------------- DATA GENERATION ---------------- */
 
-	const generateBallEvents = () => {
-		const events = [];
-		let score = 50;
 
-		for (let over = 1; over <= 20; over++) {
-			for (let ball = 1; ball <= 6; ball++) {
-				const prev = score;
-				score += (Math.random() - 0.5) * 6;
-				score = Math.max(20, Math.min(200, score));
+	// --- Cricket Event Outcomes and Constants ---
+	const CRICKET_EVENTS = [
+		{ name: "Dot Ball", value: 0, label: "0" },
+		{ name: "Single Run", value: 1, label: "1" },
+		{ name: "Double Run", value: 2, label: "2" },
+		{ name: "Triple Run", value: 3, label: "3" },
+		{ name: "Four Runs", value: 4, label: "4" },
+		{ name: "Six Runs", value: 6, label: "6" },
+		{ name: "Wicket", value: -8, label: "W" },
+		{ name: "Catch", value: -5, label: "C" },
+	];
 
-				events.push({
-					time: over + ball * 0.1,
-					open: prev,
-					high: Math.max(prev, score) + Math.random(),
-					low: Math.min(prev, score) - Math.random(),
-					close: score,
-				});
+	// Probabilities for each event (must sum to 1)
+	const EVENT_PROBABILITIES = [
+		0.22, // Dot Ball
+		0.28, // Single Run
+		0.13, // Double Run
+		0.05, // Triple Run
+		0.12, // Four Runs
+		0.08, // Six Runs
+		0.08, // Wicket
+		0.04, // Catch
+	];
+
+	function getRandomEvent() {
+		const r = Math.random();
+		let acc = 0;
+		for (let i = 0; i < EVENT_PROBABILITIES.length; i++) {
+			acc += EVENT_PROBABILITIES[i];
+			if (r < acc) return CRICKET_EVENTS[i];
+		}
+		return CRICKET_EVENTS[0];
+	}
+
+	// Custom price logic for cricket events
+	function getEventPriceChange(event, prevEvent, ballNum, over, prevPrice, prevHike) {
+		let priceChange = 0;
+		let isHike = false;
+		// 6
+		if (event.label === "6") {
+			priceChange = 2;
+			isHike = true;
+			if (prevEvent && prevEvent.label === "6") priceChange += 1;
+		}
+		// 4
+		else if (event.label === "4") {
+			priceChange = 0.8;
+			isHike = true;
+			if (prevEvent && prevEvent.label === "4") priceChange += 1;
+		}
+		// 1 run
+		else if (event.label === "1") {
+			// Only hike if previous was also 1
+			if (prevEvent && prevEvent.label === "1") {
+				priceChange = 0.2;
+				isHike = true;
+				// If continuous, add +1
+				if (prevHike && prevEvent.label === "1") priceChange += 1;
+			}
+			else {
+				priceChange = 0.2;
+				isHike = false;
 			}
 		}
-		return events;
-	};
+		// 2 run
+		else if (event.label === "2") {
+			priceChange = 0.3;
+			isHike = true;
+			if (prevEvent && prevEvent.label === "2") priceChange = 0.4;
+			if (prevEvent && prevEvent.label === "2" && prevHike) priceChange += 1;
+		}
+		// 3 run
+		else if (event.label === "3") {
+			priceChange = 0.5;
+			isHike = true;
+			if (prevEvent && prevEvent.label === "3" && prevHike) priceChange += 1;
+		}
+		// Dot ball
+		else if (event.label === "0") {
+			priceChange = 0;
+			isHike = false;
+			// If previous was a hike, decrease by 0.3
+			if (prevHike) priceChange -= 0.3;
+		}
+		// Wicket
+		else if (event.label === "W") {
+			if (over <= 2) priceChange = -5;
+			else if (over <= 10) priceChange = -3;
+			else priceChange = -2;
+			isHike = false;
+		}
+		// Catch
+		else if (event.label === "C") {
+			priceChange = -2;
+			isHike = false;
+		}
+		// If hike but next event is dot ball or 1 run, decrease by 0.3
+		if (prevHike && (event.label === "0" || event.label === "1")) {
+			priceChange -= 0.3;
+		}
+		return { priceChange, isHike };
+	}
 
-	const [ballData] = useState(generateBallEvents);
+	// Generate initial ball events (empty, will fill live)
+	const [ballData, setBallData] = useState([]);
+	const [liveScore, setLiveScore] = useState(50);
+	const [liveBall, setLiveBall] = useState(0); // 0 to 119 (20 overs * 6 balls)
+
+	// Generate and add a new ball event every 3 seconds, using cricket events
+
+	// Main event generation and storage logic (synchronized for both teams)
+	useEffect(() => {
+		let interval = null;
+		if (allEvents.length < 120) {
+			interval = setInterval(() => {
+				const ballNum = allEvents.length;
+				const over = Math.floor(ballNum / 6) + 1;
+				const ball = (ballNum % 6) + 1;
+				// Previous values for both teams
+				const prevA = ballNum === 0 ? 50 : allEvents[ballNum - 1].teamA.close;
+				const prevB = ballNum === 0 ? 50 : allEvents[ballNum - 1].teamB.close;
+				const prevEventA = ballNum === 0 ? null : allEvents[ballNum - 1].teamA.eventObj;
+				const prevHikeA = ballNum === 0 ? false : allEvents[ballNum - 1].teamA.isHike;
+				// Pick a random cricket event
+				const eventObj = getRandomEvent();
+				// Custom price logic
+				const { priceChange, isHike } = getEventPriceChange(eventObj, prevEventA, ballNum, over, prevA, prevHikeA);
+				// Always strictly opposite price movement
+				let scoreA = prevA + priceChange;
+				let scoreB = prevB - priceChange;
+				// Clamp scores
+				scoreA = Math.max(10, Math.min(200, scoreA));
+				scoreB = Math.max(10, Math.min(200, scoreB));
+				const time = over + ball * 0.1;
+				// Team A event
+				const newA = {
+					time,
+					open: prevA,
+					high: Math.max(prevA, scoreA) + Math.random(),
+					low: Math.min(prevA, scoreA) - Math.random(),
+					close: scoreA,
+					event: eventObj.label,
+					eventObj,
+					isHike,
+				};
+				// Team B event (opposite)
+				const oppEventObj = getOppositeEvent(eventObj);
+				const newB = {
+					time,
+					open: prevB,
+					high: Math.max(prevB, scoreB) + Math.random(),
+					low: Math.min(prevB, scoreB) - Math.random(),
+					close: scoreB,
+					event: oppEventObj.label,
+					eventObj: oppEventObj,
+					isHike: !isHike && priceChange !== 0,
+				};
+				// Store both events in one object
+				const newEvent = { teamA: newA, teamB: newB };
+				setAllEvents(prevData => {
+					const arr = [...prevData, newEvent];
+					localStorage.setItem('allEvents', JSON.stringify(arr));
+					return arr;
+				});
+			}, 3000);
+		}
+		return () => interval && clearInterval(interval);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [allEvents.length]);
+
+	// Update ballData based on selected team (always synchronized)
+	useEffect(() => {
+		if (selectedTeamId === IPL_TEAMS[0].id) {
+			setBallData(allEvents.map(e => e.teamA));
+		} else {
+			setBallData(allEvents.map(e => e.teamB));
+		}
+	}, [selectedTeamId, allEvents]);
 
 	/* ---------------- AGGREGATION ---------------- */
 
@@ -143,54 +314,48 @@ export default function CricketTradingChart() {
 
 	const candleData = useMemo(
 		() => aggregateData(selectedInterval),
-		[selectedInterval]
+		[selectedInterval, ballData, selectedInterval]
 	);
 
-	const lineData = candleData.map((d) => ({
+	const lineData = useMemo(() => candleData.map((d) => ({
 		time: d.time,
 		value: d.close,
-	}));
+	})), [candleData]);
 
-	const volumeData = candleData.map((d) => ({
+	const volumeData = useMemo(() => candleData.map((d) => ({
 		time: d.time,
 		value: Math.abs(d.close - d.open) * 8,
 		color: d.close >= d.open ? "#26a69a" : "#ef5350",
-	}));
+	})), [candleData]);
+
+	// Update currentData and chart synchronously with new ball events
 	useEffect(() => {
-		const interval = setInterval(() => {
-			if (candleData.length === 0) return;
-
-			const lastCandle = candleData[candleData.length - 1];
-			const newClose = lastCandle.close + (Math.random() - 0.5) * 3;
-			const change = newClose - lastCandle.open;
-			const changePercent = (change / lastCandle.open) * 100;
-
-			setCurrentData({
+		if (candleData.length === 0) return;
+		const lastCandle = candleData[candleData.length - 1];
+		const change = lastCandle.close - lastCandle.open;
+		const changePercent = (change / lastCandle.open) * 100;
+		setCurrentData({
+			open: lastCandle.open,
+			high: lastCandle.high,
+			low: lastCandle.low,
+			close: lastCandle.close,
+			change: change,
+			changePercent: changePercent,
+		});
+		if (
+			series &&
+			(chartType === "candlestick" ||
+				chartType === "hollow-candle" ||
+				chartType === "heikin-ashi")
+		) {
+			series.update({
+				time: lastCandle.time,
 				open: lastCandle.open,
-				high: Math.max(lastCandle.high, newClose),
-				low: Math.min(lastCandle.low, newClose),
-				close: newClose,
-				change: change,
-				changePercent: changePercent,
+				high: lastCandle.high,
+				low: lastCandle.low,
+				close: lastCandle.close,
 			});
-
-			if (
-				series &&
-				(chartType === "candlestick" ||
-					chartType === "hollow-candle" ||
-					chartType === "heikin-ashi")
-			) {
-				series.update({
-					time: lastCandle.time,
-					open: lastCandle.open,
-					high: Math.max(lastCandle.high, newClose),
-					low: Math.min(lastCandle.low, newClose),
-					close: newClose,
-				});
-			}
-		}, 2000);
-
-		return () => clearInterval(interval);
+		}
 	}, [candleData, series, chartType]);
 
 
@@ -239,11 +404,10 @@ export default function CricketTradingChart() {
 
 
 
+	// Only initialize chart once on mount
 	useEffect(() => {
 		if (!chartContainerRef.current) return;
-
 		chartContainerRef.current.innerHTML = "";
-
 		const chart = createChart(chartContainerRef.current, {
 			width: chartContainerRef.current.clientWidth,
 			height: window.innerHeight * 0.78,
@@ -275,28 +439,33 @@ export default function CricketTradingChart() {
 				},
 			},
 		});
-
 		chartRef.current = chart;
-
 		const main = chart.addCandlestickSeries();
 		main.setData(candleData);
-
 		const vol = chart.addHistogramSeries({
 			priceFormat: { type: "volume" },
 			priceScaleId: "",
 		});
 		vol.setData(volumeData);
-
 		chart.priceScale("").applyOptions({
 			scaleMargins: { top: 0.8, bottom: 0 },
 		});
-
 		setSeries(main);
 		setVolumeSeries(vol);
 		chart.timeScale().fitContent();
-
 		return () => chart.remove();
-	}, [candleData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Update series data only when candleData/volumeData changes
+	useEffect(() => {
+		if (series) {
+			series.setData(candleData);
+		}
+		if (volumeSeries) {
+			volumeSeries.setData(volumeData);
+		}
+	}, [candleData, volumeData, series, volumeSeries]);
 
 	/* ---------------- CHART TYPE SWITCH ---------------- */
 
@@ -458,9 +627,17 @@ export default function CricketTradingChart() {
 	return (
 		<div className="min-h-[700] bg-white text-black">
 			{/* Top Bar */}
+
 			<div className="flex items-center gap-4 px-4 py-2">
 				<img src={selectedTeam.logo} className="w-10 h-10 rounded-full" />
-				<strong>{selectedTeam.name}</strong>
+				<select
+					className="font-bold text-lg bg-white border rounded px-2 py-1"
+					value={selectedTeamId}
+					onChange={e => setSelectedTeamId(e.target.value)}
+				>
+					<option value={IPL_TEAMS[0].id}>{IPL_TEAMS[0].name}</option>
+					<option value={IPL_TEAMS[1].id}>{IPL_TEAMS[1].name}</option>
+				</select>
 
 				<select value={selectedInterval} onChange={(e) => setSelectedInterval(e.target.value)}>
 					<option value="1b">1b</option>
