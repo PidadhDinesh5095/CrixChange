@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Shield, 
-  Upload, 
-  CheckCircle, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Shield,
+  Upload,
+  CheckCircle,
   AlertCircle,
   Clock,
   User,
@@ -15,14 +16,17 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { submitKYC } from '../store/slices/kycSlice';
+import { use } from 'react';
 
 const KYCPage = () => {
   const dispatch = useDispatch();
+  const { user,token } = useSelector(state => state.auth);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [employmentType, setEmploymentType] = useState('');
+  const navigate = useNavigate();
   const [kycData, setKycData] = useState({
     personalInfo: {
       fullName: '',
@@ -316,7 +320,7 @@ const KYCPage = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 5));
     } else {
-      toast.error('Please fix validation errors');
+      toast.error('Enter all required fields correctly before proceeding');
     }
   };
 
@@ -354,12 +358,24 @@ const KYCPage = () => {
       setIsLoading(false);
     }
   };
+ 
+
+  useEffect(() => {
+    if ( !(user=== null || token === null) ) {
+      toast.error('You must be logged in to access KYC. Redirecting to login...');
+      setTimeout(() => {navigate('/login');}, 3000);
+    }else if(user!==null && user.kycStatus === 'approved'){
+      toast.success('Your KYC is already approved. Redirecting to dashboard...');
+      setTimeout(() => {navigate('/dashboard');}, 2000);
+    }
+
+  });
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-10">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Personal Information
             </h3>
@@ -485,7 +501,7 @@ const KYCPage = () => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Document Upload
             </h3>
-            
+
             {/* Aadhaar Card */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
               <h4 className="font-medium text-gray-900 dark:text-white mb-4">Aadhaar Card *</h4>
@@ -907,13 +923,12 @@ const KYCPage = () => {
 
               return (
                 <div key={step.id} className="flex items-center">
-                  <div className={`flex items-center justify-center w-12 h-10 rounded-full ${
-                    isCompleted
+                  <div className={`flex items-center justify-center w-12 h-10 rounded-full ${isCompleted
                       ? 'bg-black text-white dark:bg-white dark:text-black'
                       : isActive
                         ? 'bg-black text-white dark:bg-white dark:text-black'
                         : 'bg-gray-200 dark:bg-black text-gray-600 dark:text-white'
-                  }`}>
+                    }`}>
                     {isCompleted ? (
                       <CheckCircle className="w-5 h-5" />
                     ) : (
@@ -921,21 +936,18 @@ const KYCPage = () => {
                     )}
                   </div>
                   <div className="ml-3 hidden sm:block">
-                    <p className={`text-sm font-medium ${
-                      isActive ? 'text-black dark:text-white' : 'text-gray-600 dark:text-white'
-                    }`}>
+                    <p className={`text-sm font-medium ${isActive ? 'text-black dark:text-white' : 'text-gray-600 dark:text-white'
+                      }`}>
                       Step {step.id}
                     </p>
-                    <p className={`text-xs ${
-                      isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-white'
-                    }`}>
+                    <p className={`text-xs ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-white'
+                      }`}>
                       {step.title}
                     </p>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-12 h-0.5 mx-4 ${
-                      isCompleted ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-black'
-                    }`} />
+                    <div className={`w-12 h-0.5 mx-4 ${isCompleted ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-black'
+                      }`} />
                   )}
                 </div>
               );
@@ -957,11 +969,10 @@ const KYCPage = () => {
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto ${
-                currentStep === 1
+              className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto ${currentStep === 1
                   ? 'bg-gray-100 dark:bg-black text-gray-400 cursor-not-allowed'
                   : 'bg-gray-200 dark:bg-black text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-white'
-              }`}
+                }`}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Previous

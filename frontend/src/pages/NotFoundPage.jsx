@@ -7,7 +7,7 @@ const NotFoundPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black font-sans flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white dark:bg-black font-sans mt-10 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg w-full text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

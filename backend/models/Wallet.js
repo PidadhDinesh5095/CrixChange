@@ -106,11 +106,9 @@ walletSchema.methods.debit = async function(amount, description = '') {
 // Method to credit balance
 walletSchema.methods.credit = async function(amount, paymentMethod, description = '') {
   this.balance += amount;
-  console.log('Crediting wallet with amount:', amount); // Debug log
-  console.log('New balance after credit:', this.balance); // Debug log
-  console.log('totalDeposited before credit:', this.totalDeposited); // Debug log
+
   this.totalDeposited += amount;
-  console.log('totalDeposited after credit:', this.totalDeposited); // Debug log
+
   await this.save();
 
   await mongoose.model('Transaction').create({

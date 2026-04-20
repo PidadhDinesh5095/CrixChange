@@ -1,7 +1,7 @@
 import React from 'react';
 
 const TermsConditions = () => (
-  <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8 font-sans">
+  <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 mt-10 lg:px-8 font-sans">
     <h1 className="text-3xl font-bold mb-6">Terms &amp; Conditions</h1>
     <p className="mb-2 text-gray-500 text-sm">Last updated: 22-07-2020</p>
     <p className="mb-4">

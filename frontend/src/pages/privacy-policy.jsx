@@ -1,7 +1,7 @@
 import React from 'react';
 
 const PrivacyPolicy = () => (
-  <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8 font-sans">
+  <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8  mt-10 font-sans">
     <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
     <p className="mb-4">
       CrixChange Securities Ltd (hereinafter referred to as "CrixChange") is committed to protecting your privacy. Please read the following to learn more about our Privacy Policy.

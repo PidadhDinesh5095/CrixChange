@@ -596,7 +596,7 @@ const CricketTradingChart = () => {
                 borderDownColor: "#ef5350",
                 borderUpColor: "#26a69a",
                 wickDownColor: "#ef5350",
-                wickUpColor: "#008F75",
+                wickUpColor: "#26a69a",
             });
             newSeries.setData(dataToUse);
         } else if (type === "hollow-candle") {

@@ -84,87 +84,49 @@ const HomePage = () => {
     }
   ];
 
+
   return (
     <div className="min-h-screen bg-white dark:bg-black font-raleway">
-      {/* Live Market Ticker
-      <div className="bg-black dark:bg-black text-white dark:text-white py-2 overflow-hidden border-b border-white dark:border-white">
-        <div className="animate-ticker whitespace-nowrap">
-          <span className="inline-flex items-center space-x-12 text-sm font-medium">
-            {[...tickerData, ...tickerData].map((item, index) => (
-              <span key={index} className="inline-flex items-center space-x-3">
-                <span className="font-bold">{item.team}</span>
-                <span>₹{item.price.toFixed(2)}</span>
-                <span className={item.change >= 0 ? 'text-white dark:text-black' : 'text-gray-400 dark:text-gray-600'}>
-                  {item.change >= 0 ? '+' : ''}{item.change.toFixed(1)}%
-                </span>
-              </span>
-            ))}
-          </span>
-        </div>
-      </div> */}
-      {/* Hero Section */}
+
       <section className="relative  bg-white dark:bg-black">
-        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-[750px] px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i')] bg-top bg-cover bg-center sm:px-6 lg:px-8 pt-24 pb-32">
-          
-           <div
-              className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
-            /><motion.div
+        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i')] bg-top bg-cover  sm:px-6 lg:px-8 pb-28">
+
+          <div
+            className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
+          />
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-left"
+            className="flex flex-col items-center text-center z-20  ml-16"
           >
-           
-            <div className="flex  flex-row sm:flex-col gap-6 justify-center  w-[50%]">
-              <div className="text-6xl md:text-[6rem] font-black z-20 text-white ml-12  tracking-tighter leading-none">
-                CSK<span className='text-orange-500  ml-1 '>vs</span>MI
+            <div className="flex flex-col gap-6 items-center w-full">
+
+              <div className="text-6xl md:text-[6rem] font-black text-white tracking-tighter leading-none">
+                CSK<span className="text-orange-500 ml-1">vs</span>MI
               </div>
-              <p className="text-xl ml-6 w-[200%] md:text-2xl z-10 text-center  text-white mb-12  mx-auto  font-light">
+
+              <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
                 Start trading now with high performance.
               </p>
             </div>
 
-            <div className="flex  flex-col sm:flex-row gap-6 justify-start ml-6 ">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
                 to="/trading"
-                className="inline-flex z-10 items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
               >
                 START TRADING
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Link>
+
               <Link
                 to="/analytics"
-                className="inline-flex z-10 items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
                 VIEW ANALYTICS
               </Link>
             </div>
-
-            {/* Live Stats 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="text-center"
-                  >
-                    <div className="w-12 h-12 bg-black dark:bg-black rounded-sm flex items-center justify-center mx-auto mb-3">
-                      <Icon className="w-6 h-6 text-white dark:text-white" />
-                    </div>
-                    <div className="text-2xl md:text-3xl font-bold text-black dark:text-white mb-1">
-                      {stat.value}
-                    </div>
-                    <div className="text-gray-600 dark:text-white font-medium text-sm tracking-wide">
-                      {stat.label}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>*/}
           </motion.div>
         </div>
       </section>

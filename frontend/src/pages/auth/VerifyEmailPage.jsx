@@ -37,9 +37,14 @@ const VerifyEmailPage = () => {
             navigate('/login');
           }
         }, 3000);
+      }else{
+
+        setVerificationStatus('error');
+        toast.error(error || 'Email verification failed. Please try again.');
       }
     } catch (error) {
       setVerificationStatus('error');
+      toast.error('An error occurred while verifying your email.');
     }
   };
 
@@ -53,6 +58,8 @@ const VerifyEmailPage = () => {
       const result = await dispatch(resendVerification(email));
       if (resendVerification.fulfilled.match(result)) {
         toast.success('Verification email sent! Please check your inbox.');
+      }else{
+        toast.error(result.payload || 'Failed to resend verification email');
       }
     } catch (error) {
       toast.error('Failed to resend verification email');

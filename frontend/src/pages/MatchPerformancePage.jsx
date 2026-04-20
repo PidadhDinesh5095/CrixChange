@@ -343,11 +343,11 @@ const MatchPerformancePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000] font-raleway">
+    <div className="min-h-screen bg-white dark:bg-[#000] mt-10 font-raleway">
       {/* Header */}
      
 
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mt-10  px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Chart Area */}
           <div className="lg:col-span-3 space-y-6">
@@ -630,85 +630,6 @@ const MatchPerformancePage = () => {
   );
 };
 
-// IPL team logo URLs
 
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-      backgroundColor: '#000000',
-      titleColor: '#ffffff',
-      bodyColor: '#ffffff',
-      borderColor: '#ffffff',
-      borderWidth: 1,
-      titleFont: {
-        family: 'Raleway',
-        weight: 'bold'
-      },
-      bodyFont: {
-        family: 'Raleway'
-      },
-      callbacks: {
-        label: function (context) {
-          return `Price: ₹${context.parsed.y.toFixed(2)}`;
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      type: 'time',
-      time: {
-        displayFormats: {
-          minute: 'HH:mm',
-          hour: 'HH:mm'
-        }
-      },
-      grid: {
-        color: '#e5e7eb',
-        drawBorder: false
-      },
-      ticks: {
-        color: '#6b7280',
-        font: {
-          family: 'Raleway',
-          size: 11
-        }
-      }
-    },
-    y: {
-      grid: {
-        color: '#e5e7eb',
-        drawBorder: false
-      },
-      ticks: {
-        color: '#6b7280',
-        font: {
-          family: 'Raleway',
-          size: 11
-        },
-        callback: function (value) {
-          return '₹' + value.toFixed(2);
-        }
-      }
-    }
-  },
-  interaction: {
-    mode: 'index',
-    intersect: false
-  },
-  elements: {
-    point: {
-      hoverRadius: 6
-    }
-  }
-};
 
 export default MatchPerformancePage;

@@ -145,7 +145,7 @@ const PortfolioPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000] font-raleway py-8">
+    <div className="min-h-screen bg-white dark:bg-[#000] mt-10 font-raleway py-8">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div

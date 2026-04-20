@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
@@ -25,6 +25,9 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const [scrolled, setScrolled] = useState(false);
+  const isHome = location.pathname === "/";
+
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { isDark } = useSelector((state) => state.theme);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -55,14 +58,23 @@ const Header = () => {
   const isActiveLink = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+   useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+   const navBg = scrolled || !isHome
+    ? "bg-card/95 backdrop-blur-xl shadow-lg border-b border-border/50"
+    : "bg-transparent";
+    const textColor = scrolled || !isHome ? "text-black dark:text-white" : "text-white dark:text-white";
 
   return (
-    <header className="bg-white dark:bg-black shadow-lg  border-black dark:border-white sticky top-0 z-50 font-sans">
+    <header className={` fixed top-0 left-0 w-full z-50 ${navBg} shadow-lg border-black dark:border-white `}>
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row items-center h-16 justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 mb-3 text-[2.6rem] font-bold flex-shrink-0">
-           <h1 c>Crixchange<span  className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
+          <Link to="/" className={`flex items-center space-x-3 mb-3 text-[2.6rem] font-bold flex-shrink-0 ${textColor}`}>
+           <h1 >Crixchange<span  className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
           </Link>
 
           {/* Desktop Navigation */}
@@ -75,8 +87,8 @@ const Header = () => {
                   to={link.to}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors duration-200 ${
                     isActiveLink(link.to)
-                      ? 'text-white dark:text-black bg-black dark:bg-white'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900'
+                      ? `${textColor} bg-black dark:bg-white`
+                      : `${textColor} hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900`
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -90,7 +102,7 @@ const Header = () => {
           <div className="md:hidden flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+              className={`p-2 ${textColor}  hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors`}
               aria-label="Open menu"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -105,7 +117,7 @@ const Header = () => {
             {/* Theme Toggle */}
             <button
               onClick={handleThemeToggle}
-              className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+              className={`p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors`}
               aria-label="Toggle theme"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -114,7 +126,7 @@ const Header = () => {
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <button className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative">
+                <button className={`p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative`}>
                   <Bell className="w-5 h-5" />
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
@@ -123,9 +135,9 @@ const Header = () => {
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center space-x-2 p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                    className={`flex items-center space-x-2 p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors `}
                   >
-                    <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center ">
                       <span className="text-white dark:text-black text-md font-black">
                         {user?.firstName?.charAt(0).toUpperCase()}{user?.lastName?.charAt(0).toUpperCase()}
                       </span>
