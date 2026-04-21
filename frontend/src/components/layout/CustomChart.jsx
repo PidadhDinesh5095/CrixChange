@@ -625,7 +625,7 @@ export default function CricketTradingChart() {
 
 	/* ---------------- UI ---------------- */
 	return (
-		<div className="min-h-[700] bg-white text-black">
+		<div className="h-screen mt-16 bg-white text-black">
 			{/* Top Bar */}
 
 			<div className="flex items-center gap-4 px-4 py-2">

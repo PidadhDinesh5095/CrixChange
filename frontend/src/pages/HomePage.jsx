@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useDispatch, useSelector } from 'react-redux';
+import { getMatches } from '../store/slices/currentMatchSlice';
 import {
   TrendingUp,
   TrendingDown,
@@ -17,9 +19,18 @@ import {
   Globe,
   Award
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { use } from 'react';
 
 const HomePage = () => {
-  // Live market ticker data
+  const { isLoading, matches, selectedMatch, error } = useSelector((state) => state.currentMatch);
+  const dispatch = useDispatch();
+  const [liveMatches, setLiveMatches] = useState([]);
+
+  const CACHE_KEY = "ipl_matches";
+  const CACHE_TIME_KEY = "ipl_matches_time";
+  const EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
+
   const tickerData = [
     { team: 'MI', price: 125.50, change: 2.5 },
     { team: 'CSK', price: 142.75, change: -1.8 },
@@ -30,6 +41,86 @@ const HomePage = () => {
     { team: 'KKR', price: 112.45, change: 1.7 },
     { team: 'PBKS', price: 89.60, change: -4.2 },
   ];
+
+  console.log("Current Match State:", { isLoading, matches, selectedMatch, error }); // Debug log
+
+  // Transform matches from Redux state to liveMatches format for UI
+  const transformMatches = (matchesData) => {
+    return matchesData?.map((m) => ({
+      id: m.id,
+      title: m.match || `${m.team1} vs ${m.team2}`,
+      status: m.status || 'UPCOMING',
+      teams: [
+        { name: m.team1, price: m.team1Price || 0, change: m.team1Change || 0, volume: m.team1Volume || 0 },
+        { name: m.team2, price: m.team2Price || 0, change: m.team2Change || 0, volume: m.team2Volume || 0 }
+      ],
+      date: m.date,
+      time: m.time,
+      venue: m.venue,
+      ground: m.ground,
+      totalVolume: (m.team1Volume || 0) + (m.team2Volume || 0)
+    })) || [];
+  };
+
+  const currentMatch = (() => {
+    if (!liveMatches || liveMatches.length === 0) return null;
+
+    if (liveMatches.length === 1) return liveMatches[0]; // ✅ no sorting needed
+
+    return [...liveMatches].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`);
+      const dateB = new Date(`${b.date} ${b.time}`);
+      return dateA - dateB;
+    })[0];
+  })();
+  console.log("curent---",currentMatch);
+
+  useEffect(() => {
+    const loadAndSetMatches = async () => {
+      // Check localStorage first
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+
+      if (cachedData && cachedTime) {
+        const isExpired = Date.now() - Number(cachedTime) > EXPIRY_TIME;
+
+        if (!isExpired) {
+          // Use cached data
+          const matchesData = JSON.parse(cachedData);
+          const transformedMatches = transformMatches(matchesData);
+          setLiveMatches(transformedMatches);
+          console.log("Loaded matches from localStorage cache:", transformedMatches);
+          return;
+        }
+      }
+
+      // Fetch from API if no cache or cache expired
+      try {
+        const result = await dispatch(getMatches());
+
+        if (getMatches.fulfilled.match(result)) {
+          const data = result.payload;
+          const matchesData = data.matches || [];
+          
+          // Transform and set state
+          const transformedMatches = transformMatches(matchesData);
+          setLiveMatches(transformedMatches);
+          
+          // Save to localStorage
+          localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+
+          console.log("Fetched and set matches from API:", transformedMatches);
+        } else {
+          console.error(result.payload || "Failed to fetch matches");
+        }
+      } catch (error) {
+        console.error("Error fetching matches:", error);
+      }
+    };
+
+    loadAndSetMatches();
+  }, [dispatch]);
 
   const stats = [
     { value: '₹500Cr+', label: 'DAILY VOLUME', icon: BarChart3 },
@@ -61,35 +152,11 @@ const HomePage = () => {
     }
   ];
 
-  const liveMatches = [
-    {
-      id: 1,
-      title: 'Mumbai Indians vs Chennai Super Kings',
-      status: 'LIVE',
-      teams: [
-        { name: 'MI', price: 125.50, change: 2.5, volume: 15420 },
-        { name: 'CSK', price: 142.75, change: -1.8, volume: 18750 }
-      ],
-      totalVolume: 34170
-    },
-    {
-      id: 2,
-      title: 'Royal Challengers vs Delhi Capitals',
-      status: 'UPCOMING',
-      teams: [
-        { name: 'RCB', price: 98.25, change: 5.2, volume: 12300 },
-        { name: 'DC', price: 118.90, change: -3.1, volume: 9850 }
-      ],
-      totalVolume: 22150
-    }
-  ];
-
-
   return (
     <div className="min-h-screen bg-white dark:bg-black font-raleway">
 
       <section className="relative  bg-white dark:bg-black">
-        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i')] bg-top bg-cover  sm:px-6 lg:px-8 pb-28">
+        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i')] bg-top bg-cover  sm:px-6 lg:px-8 pb-28">
 
           <div
             className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
@@ -98,27 +165,48 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center text-center z-20  ml-16"
+            className="flex flex-col items-center text-center z-20 ml-16"
           >
             <div className="flex flex-col gap-6 items-center w-full">
 
               <div className="text-6xl md:text-[6rem] font-black text-white tracking-tighter leading-none">
-                CSK<span className="text-orange-500 ml-1">vs</span>MI
+                {currentMatch
+                  ? (
+                    <>
+                      {currentMatch.teams[0].name}
+                      <span className="text-orange-500 ml-1">vs</span>
+                      {currentMatch.teams[1].name}
+                    </>
+                  )
+                  : "No Match"}
               </div>
 
               <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
-                Start trading now with high performance.
+                {currentMatch
+                  ? currentMatch.status === "Live"
+                    ? "Start trading now with high performance."
+                    : `Match starts at ${currentMatch.time}`
+                  : "No matches available"}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link
-                to="/trading"
-                className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
-              >
-                START TRADING
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Link>
+              {currentMatch && currentMatch.status === "Live" ? (
+                <Link
+                  to="/trading"
+                  className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                >
+                  START TRADING
+                  <ChevronRight className="ml-2 w-5 h-5" />
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                >
+                  STARTS AT {currentMatch?.time || "--"}
+                </button>
+              )}
 
               <Link
                 to="/analytics"
@@ -236,6 +324,9 @@ const HomePage = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {liveMatches.length === 0 && (
+              <div className="col-span-2 text-center text-gray-500 dark:text-gray-400 py-12">No matches available.</div>
+            )}
             {liveMatches.map((match, index) => (
               <motion.div
                 key={match.id}
@@ -257,7 +348,12 @@ const HomePage = () => {
                     {match.status}
                   </span>
                 </div>
-
+                <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                  <span>{match.date}</span>
+                  <span>{match.time}</span>
+                  <span>{match.venue}</span>
+                  <span>{match.ground}</span>
+                </div>
                 <div className="space-y-4">
                   {match.teams.map((team, teamIndex) => (
                     <div key={teamIndex} className="flex items-center justify-between p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-sm">
@@ -268,25 +364,24 @@ const HomePage = () => {
                         <div>
                           <p className="font-bold text-black dark:text-white">{team.name}</p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            VOL: {team.volume.toLocaleString()}
+                            VOL: {team.volume?.toLocaleString?.() || team.volume}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-bold text-black dark:text-white">
-                          ₹{team.price.toFixed(2)}
+                          ₹{Number(team.price).toFixed(2)}
                         </p>
                         <p className={`text-sm font-bold ${team.change >= 0
                           ? 'text-black dark:text-white'
                           : 'text-gray-600 dark:text-gray-400'
                           }`}>
-                          {team.change >= 0 ? '+' : ''}{team.change.toFixed(1)}%
+                          {team.change >= 0 ? '+' : ''}{Number(team.change).toFixed(1)}%
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
-
                 <Link
                   to={`/match-performance/${match.id}`}
                   className="mt-6 w-full inline-flex items-center justify-center px-4 py-3 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-bold rounded-sm transition-colors"

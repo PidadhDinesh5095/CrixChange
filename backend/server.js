@@ -17,6 +17,7 @@ import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
+import currentMatchRoutes from './routes/currentMatchRoutes.js';
 {/**import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import tradingRoutes from './routes/tradingRoutes.js';
@@ -80,6 +81,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/currentMatches', currentMatchRoutes);
 // Remove this dummy GET route, it's not needed for registration
 // app.get('/register',(req,res)=>{res.send("Hello")});
 {/**

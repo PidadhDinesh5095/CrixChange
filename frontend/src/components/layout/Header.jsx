@@ -87,7 +87,7 @@ const Header = () => {
                   to={link.to}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors duration-200 ${
                     isActiveLink(link.to)
-                      ? `${textColor} bg-black dark:bg-white`
+                      ? `${textColor} bg-white dark:bg-black`
                       : `${textColor} hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900`
                   }`}
                 >

@@ -5,6 +5,7 @@ import tradingSlice from './slices/tradingSlice';
 import portfolioSlice from './slices/portfolioSlice';
 import kycSlice from './slices/kycSlice';
 import themeSlice from './slices/themeSlice';
+import getCurrentMatches from './slices/currentMatchSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     portfolio: portfolioSlice,
     kyc: kycSlice,
     theme: themeSlice,
+    currentMatch: getCurrentMatches,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -211,7 +211,7 @@ const AppContent = () => {
             background: '#000000',
             color: '#ffffff',
             border: '1px solid #ffffff',
-            fontFamily: 'Monaco, Consolas, monospace',
+            fontFamily: 'Darker Grotesque',
             fontWeight: 'bold',
           },
           success: {

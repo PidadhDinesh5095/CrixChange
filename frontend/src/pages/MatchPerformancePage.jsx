@@ -343,290 +343,33 @@ const MatchPerformancePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#000] mt-10 font-raleway">
+    <div className="pt-20  bg-pink-100 dark:bg-[#000] font-raleway ">
       {/* Header */}
-     
-
-      <div className="max-w-8xl mt-10  px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    
+      <div className="max-w-8xl  px-4 sm:px-6 lg:px-8 py-8">
+        
           {/* Main Chart Area */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Team Performance Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {matchData.teams.map((team, index) => (
-                <motion.div
-                  key={team.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-gray-50 dark:bg-[#000] border border-gray-200 dark:border-[#fff] rounded-sm p-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-black dark:bg-white rounded-sm flex items-center justify-center">
-                        <img src={team.logo} alt={team.shortName} className="w-full h-full  bg-white object-cover " />
-
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-black dark:text-white flex items-center">
-
-                          {team.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{team.shortName}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-black dark:text-white">
-                        ₹{team.currentPrice.toFixed(2)}
-                      </p>
-                      <div className={`flex items-center justify-end ${team.change >= 0 ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'
-                        }`}>
-                        {team.change >= 0 ? (
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4 mr-1" />
-                        )}
-                        <span className="font-bold">
-                          {team.change >= 0 ? '+' : ''}{team.change.toFixed(2)} ({team.changePercent.toFixed(2)}%)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div className="text-center">
-                      <span className="text-gray-600 dark:text-gray-400 block text-xs">OPEN</span>
-                      <span className="font-bold text-black dark:text-white">₹{team.openPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-gray-600 dark:text-gray-400 block text-xs">HIGH</span>
-                      <span className="font-bold text-black dark:text-white">₹{team.dayHigh.toFixed(2)}</span>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-gray-600 dark:text-gray-400 block text-xs">LOW</span>
-                      <span className="font-bold text-black dark:text-white">₹{team.dayLow.toFixed(2)}</span>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-gray-600 dark:text-gray-400 block text-xs">VOL</span>
-                      <span className="font-bold text-black dark:text-white">{team.volume.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Price Chart */}
+          
+            
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="bg-white dark:bg-[#000] border border-gray-200 dark:border-[#fff] rounded-sm"
             >
-              <div className="p-6 border-b border-gray-200 dark:border-[#fff]">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-black dark:text-white">PRICE PERFORMANCE</h3>
-                  <div className="flex items-center space-x-2">
-                    {timeframes.map((timeframe) => (
-                      <button
-                        key={timeframe.value}
-                        className={`px-3 py-1 rounded-sm text-sm font-medium transition-colors ${selectedTimeframe === timeframe.value
-                            ? 'bg-black dark:bg-white text-white dark:text-black'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          }`}
-                        onClick={() => setSelectedTimeframe(timeframe.value)}
-                      >
-                        {timeframe.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
+              
+              
                 <div className="h-auto">
                   <CricketTradingChart />
-                  {/**  {matchData.teams.map((team, index) => (
-                    <div key={team.id} className={`${index > 0 ? 'mt-8' : ''}`}>
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-bold text-black dark:text-white">{team.shortName} PRICE CHART</h4>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">LAST: ₹{team.currentPrice.toFixed(2)}</span>
-                          <span className={team.change >= 0 ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>
-                            {team.change >= 0 ? '+' : ''}{team.changePercent.toFixed(2)}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="h-80 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-[#fff] rounded-sm p-4">
-                        <Line
-                          ref={index === 0 ? chartRef : null}
-                          data={getChartData(team)}
-                          options={{
-                            ...chartOptions,
-                            plugins: {
-                              ...chartOptions.plugins,
-                              title: {
-                                display: false
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}**/}
+                  
                 </div>
-              </div>
+              
             </motion.div>
-          </div>
+          
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Trade */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="bg-gray-50 dark:bg-[#000] border border-gray-200 dark:border-[#fff] rounded-sm p-4"
-            >
-              <h3 className="font-bold text-black dark:text-[#fff] text-sm mb-4">QUICK TRADE</h3>
-              <div className="space-y-3">
-                <select className="w-full bg-white dark:bg-[#000] border border-gray-300 dark:border-[#fff] text-black dark:text-[#fff] p-2 rounded-sm text-sm">
-                  <option>SELECT TEAM</option>
-                  <option value="mi">Mumbai Indians</option>
-                  <option value="srh">Sunrises Hyderabad</option>
-                </select>
-                <div className="grid grid-cols-2 gap-2">
-                  <button className="bg-black dark:bg-[#fff] text-white dark:text-[#000] py-2 px-3 rounded-sm font-bold text-sm">
-                    BUY
-                  </button>
-                  <button className="bg-gray-400 dark:bg-gray-600 text-white py-2 px-3 rounded-sm font-bold text-sm">
-                    SELL
-                  </button>
-                </div>
-                <input
-                  type="number"
-                  placeholder="QUANTITY"
-                  className="w-full bg-white dark:bg-[#000] border border-gray-300 dark:border-[#fff] text-black dark:text-[#fff] p-2 rounded-sm text-sm"
-                />
-                <button className="w-full bg-black dark:bg-[#fff] text-white dark:text-[#000] py-2 rounded-sm font-bold text-sm">
-                  PLACE ORDER
-                </button>
-              </div>
-            </motion.div>
-            {/* Order Book */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white dark:bg-[#000] border border-gray-200 dark:border-[#fff] rounded-sm"
-            >
-              <div className="p-4 border-b border-gray-200 dark:border-[#fff]">
-                <h3 className="font-bold text-black dark:text-[#fff] text-sm">ORDER BOOK - MI</h3>
-              </div>
-              <div className="p-4">
-                <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs font-bold text-gray-600 dark:text-gray-400 pb-2 border-b border-gray-200 dark:border-[#fff]">
-                    <span>PRICE</span>
-                    <span className="text-right">QTY</span>
-                    <span className="text-right">TOTAL</span>
-                  </div>
-                  {/* Asks (Sell Orders) */}
-                  <div className="space-y-1">
-                    {matchData.orderBook.asks.slice().reverse().map((ask, index) => (
-                      <div key={index} className="grid grid-cols-3 gap-2 text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">₹{ask.price.toFixed(2)}</span>
-                        <span className="text-right text-black dark:text-white">{ask.quantity}</span>
-                        <span className="text-right text-black dark:text-white">{ask.total}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Current Price */}
-                  <div className="py-2 border-y border-gray-200 dark:border-[#fff]">
-                    <div className="text-center">
-                      <span className="text-lg font-bold text-black dark:text-white">
-                        ₹{matchData.teams[0].currentPrice.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Bids (Buy Orders) */}
-                  <div className="space-y-1">
-                    {matchData.orderBook.bids.map((bid, index) => (
-                      <div key={index} className="grid grid-cols-3 gap-2 text-xs">
-                        <span className="text-black dark:text-white">₹{bid.price.toFixed(2)}</span>
-                        <span className="text-right text-black dark:text-white">{bid.quantity}</span>
-                        <span className="text-right text-black dark:text-white">{bid.total}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Match Events */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white dark:bg-[#000] border border-gray-200 dark:border-[#fff] rounded-sm"
-            >
-              <div className="p-4 border-b border-gray-200 dark:border-[#fff]">
-                <h3 className="font-bold text-black dark:text-[#fff] text-sm">MATCH EVENTS</h3>
-              </div>
-              <div className="p-4">
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {matchData.matchEvents.map((event, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${event.impact === 'positive' ? 'bg-black dark:bg-white' :
-                          event.impact === 'negative' ? 'bg-gray-600 dark:bg-gray-400' :
-                            'bg-gray-400 dark:bg-gray-600'
-                        }`}></div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{event.time}</span>
-                        </div>
-                        <p className="text-sm text-black dark:text-white mt-1">{event.event}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Market Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              // Swap the theme colors: black for light, white for dark
-              className="bg-white dark:bg-[#000] border rounded-sm p-4"
-            >
-              <h3 className="font-bold text-black dark:text-[#fff] text-sm mb-4">MARKET STATS</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400 dark:text-gray-600">TOTAL VOLUME</span>
-                  <span className="text-black dark:text-[#fff] font-bold">
-                    {(matchData.teams[0].volume + matchData.teams[1].volume).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400 dark:text-gray-600">MARKET CAP</span>
-                  <span className="text-black dark:text-[#fff] font-bold">
-                    ₹{((matchData.teams[0].marketCap + matchData.teams[1].marketCap) / 10000000).toFixed(1)}Cr
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400 dark:text-gray-600">SPREAD</span>
-                  <span className="text-black dark:text-[#fff] font-bold">
-                    ₹{Math.abs(matchData.teams[0].currentPrice - matchData.teams[1].currentPrice).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400 dark:text-gray-600">VOLATILITY</span>
-                  <span className="text-black dark:text-[#fff] font-bold">2.4%</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 
