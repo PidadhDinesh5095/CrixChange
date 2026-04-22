@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMatches } from '../store/slices/currentMatchSlice';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import {
   TrendingUp,
   TrendingDown,
@@ -23,7 +24,7 @@ import toast from 'react-hot-toast';
 import { use } from 'react';
 
 const HomePage = () => {
-  const { isLoading, matches, selectedMatch, error } = useSelector((state) => state.currentMatch);
+  const { isLoading, selectedMatch, error } = useSelector((state) => state.currentMatch);
   const dispatch = useDispatch();
   const [liveMatches, setLiveMatches] = useState([]);
 
@@ -41,31 +42,148 @@ const HomePage = () => {
     { team: 'KKR', price: 112.45, change: 1.7 },
     { team: 'PBKS', price: 89.60, change: -4.2 },
   ];
+  const matchImages = {
+    
+    "CSK_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i",
+    "CSK_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "CSK_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "CSK_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "CSK_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "CSK_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "CSK_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
+    "CSK_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "CSK_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
 
-  console.log("Current Match State:", { isLoading, matches, selectedMatch, error }); // Debug log
+    "MI_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6368/1742488016368-i",
+    
+    "MI_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    "MI_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "MI_vs_SRH": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "MI_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "MI_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "MI_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
+    "MI_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "MI_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+
+    "RCB_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "RCB_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    
+    "RCB_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    "RCB_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "RCB_vs_DC": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "RCB_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RCB_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
+    "RCB_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "RCB_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+
+    "KKR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "KKR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "KKR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    
+    "KKR_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr0nvynAcabDcOrKXyKz95TeJzfln2eI6U5w&s",
+    "KKR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "KKR_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "KKR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
+    "KKR_vs_GT": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "KKR_vs_LSG": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+
+    "SRH_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "SRH_vs_MI": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "SRH_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "SRH_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8284/1743605638284-i",
+    
+    "SRH_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2803/1776584212803-i",
+    "SRH_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9355/1776029099355-i",
+    "SRH_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
+    "SRH_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4309/1743868234309-i",
+    "SRH_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+
+    "DC_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "DC_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "DC_vs_RCB": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "DC_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "DC_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i",
+    
+    "DC_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
+    "DC_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
+    "DC_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "DC_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+
+    "RR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "RR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "RR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RR_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "RR_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
+    
+    "RR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
+    "RR_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "RR_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+
+    "PBKS_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
+    "PBKS_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
+    "PBKS_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
+    "PBKS_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
+    "PBKS_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
+    "PBKS_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
+    "PBKS_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
+    
+    "PBKS_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
+    "PBKS_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
+
+    "GT_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "GT_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "GT_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "GT_vs_KKR": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "GT_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9FELbajMb2GvuRFzICyemj4Pnro6iFjLiXw&s",
+    "GT_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "GT_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "GT_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
+    
+    "GT_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+
+    "LSG_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
+    "LSG_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+    "LSG_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+    "LSG_vs_KKR": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+    "LSG_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+    "LSG_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+    "LSG_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+    "LSG_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
+    "LSG_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+    
+  };
+
+
 
   // Transform matches from Redux state to liveMatches format for UI
   const transformMatches = (matchesData) => {
-    return matchesData?.map((m) => ({
-      id: m.id,
-      title: m.match || `${m.team1} vs ${m.team2}`,
-      status: m.status || 'UPCOMING',
-      teams: [
-        { name: m.team1, price: m.team1Price || 0, change: m.team1Change || 0, volume: m.team1Volume || 0 },
-        { name: m.team2, price: m.team2Price || 0, change: m.team2Change || 0, volume: m.team2Volume || 0 }
-      ],
-      date: m.date,
-      time: m.time,
-      venue: m.venue,
-      ground: m.ground,
-      totalVolume: (m.team1Volume || 0) + (m.team2Volume || 0)
-    })) || [];
+    return matchesData?.map((m) => {
+      const key = `${m.team1}_vs_${m.team2}`;
+
+      return {
+        id: m.id,
+        title: m.match || `${m.team1} vs ${m.team2}`,
+        status: m.status || 'UPCOMING',
+        image: matchImages[key] || "https://akm-img-a-in.tosshub.com/indiatoday/images/story/202311/ipl-trophyjpeg-310330-16x9.jpeg?VersionId=Gk8RUADOTtcmYUr8qTymwrDlFiRZP8mK&size=690:388",
+
+        teams: [
+          { name: m.team1, price: m.team1Price || 0, change: m.team1Change || 0, volume: m.team1Volume || 0 },
+          { name: m.team2, price: m.team2Price || 0, change: m.team2Change || 0, volume: m.team2Volume || 0 }
+        ],
+
+        date: m.date,
+        time: m.time,
+        venue: m.venue,
+        ground: m.ground,
+        totalVolume: (m.team1Volume || 0) + (m.team2Volume || 0)
+      };
+    }) || [];
   };
 
   const currentMatch = (() => {
     if (!liveMatches || liveMatches.length === 0) return null;
 
-    if (liveMatches.length === 1) return liveMatches[0]; // ✅ no sorting needed
+    if (liveMatches.length === 1) return liveMatches[0];
 
     return [...liveMatches].sort((a, b) => {
       const dateA = new Date(`${a.date} ${a.time}`);
@@ -73,7 +191,35 @@ const HomePage = () => {
       return dateA - dateB;
     })[0];
   })();
-  console.log("curent---",currentMatch);
+  const upcomingMatches = (() => {
+
+    if (liveMatches && liveMatches.length > 1) {
+      const sorted = [...liveMatches].sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateA - dateB;
+      });
+
+      // 🔥 remove first + limit to 3
+      return sorted.slice(1, 4);
+    }
+
+    // Case 2
+    const upcomingFromLive = (liveMatches || []).filter(m => m.status === 'UPCOMING');
+
+    if (upcomingFromLive.length > 0) {
+      return upcomingFromLive
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date} ${a.time}`);
+          const dateB = new Date(`${b.date} ${b.time}`);
+          return dateA - dateB;
+        })
+        .slice(0, 3);
+    }
+
+    return [];
+  })();
+  console.log("curent---", currentMatch);
 
   useEffect(() => {
     const loadAndSetMatches = async () => {
@@ -101,14 +247,14 @@ const HomePage = () => {
         if (getMatches.fulfilled.match(result)) {
           const data = result.payload;
           const matchesData = data.matches || [];
-          
+
           // Transform and set state
           const transformedMatches = transformMatches(matchesData);
           setLiveMatches(transformedMatches);
-          
+
           // Save to localStorage
-          localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
-          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+          //localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
+          //localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
 
           console.log("Fetched and set matches from API:", transformedMatches);
         } else {
@@ -151,70 +297,120 @@ const HomePage = () => {
       description: 'Enterprise-level security, redundancy, and scalability for serious investors.',
     }
   ];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading leaderboard..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-black font-raleway">
 
       <section className="relative  bg-white dark:bg-black">
-        <div className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-[url('https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i')] bg-top bg-cover  sm:px-6 lg:px-8 pb-28">
 
+        <div
+          className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-top bg-cover sm:px-6 lg:px-8 pb-28"
+          style={{
+            backgroundImage: `url(${currentMatch?.image ||
+              "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i"
+              })`
+          }}
+        >
           <div
             className={`pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent`}
           />
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center text-center z-20 ml-16"
+            className="flex flex-row items-end justify-between z-20 w-full"
           >
-            <div className="flex flex-col gap-6 items-center w-full">
 
-              <div className="text-6xl md:text-[6rem] font-black text-white tracking-tighter leading-none">
-                {currentMatch
-                  ? (
-                    <>
-                      {currentMatch.teams[0].name}
-                      <span className="text-orange-500 ml-1">vs</span>
-                      {currentMatch.teams[1].name}
-                    </>
-                  )
-                  : "No Match"}
+            {/* 🔥 LEFT: Current Match Section */}
+            <div className="  flex flex-col items-center justify-end    w-[40%]  rounded-sm">
+
+              <div className="flex flex-col gap-6 items-center ">
+
+                <div className="text-6xl md:text-[6rem] font-black text-white tracking-tighter leading-none">
+                  {currentMatch
+                    ? (
+                      <>
+                        {currentMatch.teams[0].name}
+                        <span className="text-orange-500 ml-1"> vs </span>
+                        {currentMatch.teams[1].name}
+                      </>
+                    )
+                    : "No Match"}
+                </div>
+
+                <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
+                  {currentMatch
+                    ? currentMatch.status === "Live"
+                      ? "Start trading now with high performance."
+                      : `Match starts at ${currentMatch.time}`
+                    : "No matches available"}
+                </p>
               </div>
 
-              <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
-                {currentMatch
-                  ? currentMatch.status === "Live"
-                    ? "Start trading now with high performance."
-                    : `Match starts at ${currentMatch.time}`
-                  : "No matches available"}
-              </p>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                {currentMatch && currentMatch.status === "Live" ? (
+                  <Link
+                    to="/trading"
+                    className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                  >
+                    START TRADING
+                    <ChevronRight className="ml-2 w-5 h-5" />
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                  >
+                    STARTS AT {currentMatch?.time || "--"}
+                  </button>
+                )}
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              {currentMatch && currentMatch.status === "Live" ? (
                 <Link
-                  to="/trading"
-                  className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                  to="/analytics"
+                  className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
-                  START TRADING
-                  <ChevronRight className="ml-2 w-5 h-5" />
+                  VIEW ANALYTICS
                 </Link>
-              ) : (
-                <button
-                  disabled
-                  className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
-                >
-                  STARTS AT {currentMatch?.time || "--"}
-                </button>
-              )}
-
-              <Link
-                to="/analytics"
-                className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-              >
-                VIEW ANALYTICS
-              </Link>
+              </div>
             </div>
+
+            {/* 🔥 RIGHT: Upcoming Matches Section */}
+            {upcomingMatches && upcomingMatches.length > 0 && (
+              <div className="flex flex-row gap-4  px-4 w-[50%] justify-end no-scrollbar scroll-smooth">
+                {upcomingMatches.map((m) => (
+                  <div
+                    key={m.id}
+                    className="relative min-w-[160px] h-[90px] rounded-lg overflow-hidden cursor-pointer  hover:scale-105 transition flex-shrink-0"
+                  >
+                    <img
+                      src={m.image || "https://static.toiimg.com/thumb/msid-78076709,width-400,resizemode-4/78076709.jpg"}
+                      alt={m.title}
+                      className="w-full h-full object-cover"
+                    />
+
+                    <div className="absolute bottom-0 w-full p-2 bg-gradient-to-t from-black/100 to-transparent text-white">
+                      <p className="text-sm font-semibold">
+                        {m.teams[0].name} vs {m.teams[1].name}
+                      </p>
+                      <p className="text-xs opacity-80">
+                        {m.date} • {m.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+
+              </div>
+            )}
+
           </motion.div>
         </div>
       </section>

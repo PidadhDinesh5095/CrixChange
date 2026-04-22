@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
 const initialState = {
-  matches: [],
+  liveMatches: [],
   selectedMatch: null,
   isLoading: false,
   error: null,
@@ -37,8 +37,8 @@ const currentMatchSlice = createSlice({
         })
         .addCase(getMatches.fulfilled, (state, action) => {
             state.isLoading = false;
-            state.matches = action.payload.matches || [];
-            console.log("Matches fetched successfully:", state.matches); // Debug log
+            state.liveMatches = action.payload.matches || [];
+            console.log("Matches fetched successfully:", state.liveMatches); // Debug log
         })
         .addCase(getMatches.rejected, (state, action) => {
             state.isLoading = false;
