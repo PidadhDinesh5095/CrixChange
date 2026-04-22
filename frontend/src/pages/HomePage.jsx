@@ -43,7 +43,7 @@ const HomePage = () => {
     { team: 'PBKS', price: 89.60, change: -4.2 },
   ];
   const matchImages = {
-    
+
     "CSK_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i",
     "CSK_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
     "CSK_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
@@ -55,7 +55,7 @@ const HomePage = () => {
     "CSK_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
 
     "MI_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6368/1742488016368-i",
-    
+
     "MI_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
     "MI_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
     "MI_vs_SRH": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
@@ -67,7 +67,7 @@ const HomePage = () => {
 
     "RCB_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
     "RCB_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
-    
+
     "RCB_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
     "RCB_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
     "RCB_vs_DC": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
@@ -79,7 +79,7 @@ const HomePage = () => {
     "KKR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
     "KKR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
     "KKR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
-    
+
     "KKR_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr0nvynAcabDcOrKXyKz95TeJzfln2eI6U5w&s",
     "KKR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
     "KKR_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
@@ -91,7 +91,7 @@ const HomePage = () => {
     "SRH_vs_MI": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
     "SRH_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
     "SRH_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8284/1743605638284-i",
-    
+
     "SRH_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2803/1776584212803-i",
     "SRH_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9355/1776029099355-i",
     "SRH_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
@@ -103,7 +103,7 @@ const HomePage = () => {
     "DC_vs_RCB": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
     "DC_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
     "DC_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i",
-    
+
     "DC_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
     "DC_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
     "DC_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
@@ -114,7 +114,7 @@ const HomePage = () => {
     "RR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
     "RR_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
     "RR_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
-    
+
     "RR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
     "RR_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
     "RR_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
@@ -126,7 +126,7 @@ const HomePage = () => {
     "PBKS_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
     "PBKS_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
     "PBKS_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
-    
+
     "PBKS_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
     "PBKS_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
 
@@ -138,7 +138,7 @@ const HomePage = () => {
     "GT_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
     "GT_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
     "GT_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
-    
+
     "GT_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
 
     "LSG_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
@@ -150,10 +150,32 @@ const HomePage = () => {
     "LSG_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
     "LSG_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
     "LSG_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
-    
+
   };
 
 
+  const convertToTodayDate = (timeStr) => {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+
+    if (modifier.toLowerCase() === 'pm' && hours !== '12') {
+      hours = parseInt(hours) + 12;
+    }
+    if (modifier.toLowerCase() === 'am' && hours === '12') {
+      hours = '00';
+    }
+
+    const now = new Date();
+    const matchDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      hours,
+      minutes
+    );
+
+    return matchDate;
+  };
 
   // Transform matches from Redux state to liveMatches format for UI
   const transformMatches = (matchesData) => {
@@ -219,7 +241,7 @@ const HomePage = () => {
 
     return [];
   })();
-  console.log("curent---", currentMatch);
+
 
   useEffect(() => {
     const loadAndSetMatches = async () => {
@@ -232,10 +254,11 @@ const HomePage = () => {
 
         if (!isExpired) {
           // Use cached data
+
           const matchesData = JSON.parse(cachedData);
           const transformedMatches = transformMatches(matchesData);
           setLiveMatches(transformedMatches);
-          console.log("Loaded matches from localStorage cache:", transformedMatches);
+
           return;
         }
       }
@@ -253,8 +276,8 @@ const HomePage = () => {
           setLiveMatches(transformedMatches);
 
           // Save to localStorage
-          //localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
-          //localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+          localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
 
           console.log("Fetched and set matches from API:", transformedMatches);
         } else {
@@ -348,15 +371,15 @@ const HomePage = () => {
 
                 <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
                   {currentMatch
-                    ? currentMatch.status === "Live"
-                      ? "Start trading now with high performance."
+                    ? currentMatch.status === "In Progress"
+                      ? "Start trading now - match is live!"
                       : `Match starts at ${currentMatch.time}`
                     : "No matches available"}
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                {currentMatch && currentMatch.status === "Live" ? (
+                {currentMatch && (currentMatch.status === "In Progress" ||  convertToTodayDate(currentMatch.time) <= new Date()) ? (
                   <Link
                     to="/trading"
                     className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
@@ -536,12 +559,12 @@ const HomePage = () => {
                   <h3 className="text-lg font-bold text-black dark:text-white">
                     {match.title}
                   </h3>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-bold ${match.status === 'LIVE'
+                  <span className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-bold ${match.status === 'In Progress'
                     ? 'bg-black text-white dark:bg-white dark:text-black'
                     : 'bg-gray-400 text-white dark:bg-gray-600 dark:text-white'
                     }`}>
-                    {match.status === 'LIVE' && <Play className="w-3 h-3 mr-1" />}
-                    {match.status}
+                    {(match.status === 'In Progress' ||  convertToTodayDate(match.time) <= new Date()) && <Play className="w-3 h-3 mr-1" />}
+                    Live
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">

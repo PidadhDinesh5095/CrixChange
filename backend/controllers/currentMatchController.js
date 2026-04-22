@@ -74,7 +74,7 @@ export const getCurrentMatches = async (req, res) => {
                 ground: info.venueInfo.ground,
                 status: info.state
               });
-              
+
             });
           }
         });
@@ -96,16 +96,18 @@ export const getCurrentMatches = async (req, res) => {
               // Convert timestamp → IST
               const dateObj = new Date(Number(info.startDate));
 
-              const date = dateObj.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-              });
-
               const time = dateObj.toLocaleTimeString("en-IN", {
                 hour: "2-digit",
                 minute: "2-digit",
-                hour12: true
+                hour12: true,
+                timeZone: "Asia/Kolkata"
+              });
+
+              const date = dateObj.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                timeZone: "Asia/Kolkata"
               });
 
               matches.push({
@@ -119,7 +121,7 @@ export const getCurrentMatches = async (req, res) => {
                 ground: info.venueInfo.ground,
                 status: info.state
               });
-              
+
             });
           }
         });
@@ -128,16 +130,16 @@ export const getCurrentMatches = async (req, res) => {
 
 
     res.status(200).json(
-        {
-            succes:true,
-            message:"Current matches retrieved successfully",
-            matches
-        }
+      {
+        succes: true,
+        message: "Current matches retrieved successfully",
+        matches
+      }
     );
     console.log('Matches retrieved:', matches);
-    
-        
-    
+
+
+
 
   } catch (error) {
     res.status(500).json({
