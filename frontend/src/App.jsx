@@ -71,7 +71,7 @@ const AppContent = () => {
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200 overflow-y-scroll no-scrollbar">
       <Router>
         <Header />
         <ErrorBoundary>

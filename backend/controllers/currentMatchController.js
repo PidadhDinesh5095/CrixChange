@@ -136,7 +136,7 @@ export const getCurrentMatches = async (req, res) => {
         matches
       }
     );
-    console.log('Matches retrieved:', matches);
+    
 
 
 

@@ -329,12 +329,12 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black font-raleway">
+    <div className="min-h-screen w-full bg-white dark:bg-black font-raleway ">
 
-      <section className="relative  bg-white dark:bg-black">
+      <section className="relative w-full  bg-white dark:bg-black">
 
         <div
-          className="max-w-8xl flex flex-row items-end justify-start mx-auto h-screen px-4 bg-top bg-cover sm:px-6 lg:px-8 pb-28"
+          className="w-full flex flex-row items-end justify-start mx-auto h-screen px-4 bg-top bg-cover sm:px-6 lg:px-8 pb-28"
           style={{
             backgroundImage: `url(${currentMatch?.image ||
               "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i"
@@ -411,7 +411,7 @@ const HomePage = () => {
                 {upcomingMatches.map((m) => (
                   <div
                     key={m.id}
-                    className="relative min-w-[160px] h-[90px] rounded-lg overflow-hidden cursor-pointer  hover:scale-105 transition flex-shrink-0"
+                    className="relative min-w-[175px] h-[100px] rounded-lg overflow-hidden cursor-pointer  hover:scale-105 transition flex-shrink-0"
                   >
                     <img
                       src={m.image || "https://static.toiimg.com/thumb/msid-78076709,width-400,resizemode-4/78076709.jpg"}
@@ -419,7 +419,7 @@ const HomePage = () => {
                       className="w-full h-full object-cover"
                     />
 
-                    <div className="absolute bottom-0 w-full p-2 bg-gradient-to-t from-black/100 to-transparent text-white">
+                    <div className="absolute bottom-0 w-full h-[50%] p-2 bg-gradient-to-t from-black/100 to-transparent text-white">
                       <p className="text-sm font-semibold">
                         {m.teams[0].name} vs {m.teams[1].name}
                       </p>
@@ -433,8 +433,9 @@ const HomePage = () => {
 
               </div>
             )}
-
+    
           </motion.div>
+          <div className="pointer-events-none absolute bottom-0 left-0 w-full h-[50%] z-10 bg-gradient-to-t from-black to-transparent"></div>
         </div>
       </section>
       {/* Live Trading Terminal Preview */}
