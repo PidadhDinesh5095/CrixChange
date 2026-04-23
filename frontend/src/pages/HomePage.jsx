@@ -30,7 +30,7 @@ const HomePage = () => {
 
   const CACHE_KEY = "ipl_matches";
   const CACHE_TIME_KEY = "ipl_matches_time";
-  const EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
+  const EXPIRY_TIME = 60 * 60 * 1000; // 5 minutes
 
   const tickerData = [
     { team: 'MI', price: 125.50, change: 2.5 },

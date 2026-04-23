@@ -142,6 +142,7 @@ export const getCurrentMatches = async (req, res) => {
 
 
   } catch (error) {
+    console.error('Error fetching current matches:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error fetching current matches',
