@@ -4,8 +4,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { depositFunds, getWalletBalance, withdrawFunds, getTransactionHistory } from '../store/slices/walletSlice';
 
-
-
 import {
   Wallet,
   Plus,

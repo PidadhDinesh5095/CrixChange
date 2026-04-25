@@ -312,7 +312,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyEmail.rejected, (state, action) => {
-        console.log("Email verification failed with error:", action.payload);
+        
         state.isLoading = false;
         state.error = action.payload;
       })

@@ -48,7 +48,7 @@ export const getCurrentMatches = async (req, res) => {
             wrapper.matches.forEach(m => {
               const info = m.matchInfo;
 
-              // Convert timestamp → IST
+              if (info.state === "Complete") return;
               const dateObj = new Date(Number(info.startDate));
 
               const date = dateObj.toLocaleDateString("en-IN", {
@@ -127,6 +127,7 @@ export const getCurrentMatches = async (req, res) => {
         });
       }
     });
+    console.log('Current matches fetched successfully:', matches);
 
 
     res.status(200).json(

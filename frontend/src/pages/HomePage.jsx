@@ -180,6 +180,7 @@ const HomePage = () => {
   // Transform matches from Redux state to liveMatches format for UI
   const transformMatches = (matchesData) => {
     return matchesData?.map((m) => {
+      
       const key = `${m.team1}_vs_${m.team2}`;
 
       return {
@@ -248,6 +249,7 @@ const HomePage = () => {
       // Check localStorage first
       const cachedData = localStorage.getItem(CACHE_KEY);
       const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+      
 
       if (cachedData && cachedTime) {
         const isExpired = Date.now() - Number(cachedTime) > EXPIRY_TIME;
@@ -270,6 +272,7 @@ const HomePage = () => {
         if (getMatches.fulfilled.match(result)) {
           const data = result.payload;
           const matchesData = data.matches || [];
+          
 
           // Transform and set state
           const transformedMatches = transformMatches(matchesData);
