@@ -180,7 +180,7 @@ const HomePage = () => {
   // Transform matches from Redux state to liveMatches format for UI
   const transformMatches = (matchesData) => {
     return matchesData?.map((m) => {
-      
+
       const key = `${m.team1}_vs_${m.team2}`;
 
       return {
@@ -249,7 +249,7 @@ const HomePage = () => {
       // Check localStorage first
       const cachedData = localStorage.getItem(CACHE_KEY);
       const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-      
+
 
       if (cachedData && cachedTime) {
         const isExpired = Date.now() - Number(cachedTime) > EXPIRY_TIME;
@@ -272,7 +272,7 @@ const HomePage = () => {
         if (getMatches.fulfilled.match(result)) {
           const data = result.payload;
           const matchesData = data.matches || [];
-          
+
 
           // Transform and set state
           const transformedMatches = transformMatches(matchesData);
@@ -326,7 +326,10 @@ const HomePage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading leaderboard..." />
+        <h1 className="animate-pulse text-5xl font-bold text-black dark:text-white">
+          Crixchange
+          <span className="text-red-500 ml-[0.5] font-bold">.</span>
+        </h1>
       </div>
     );
   }
@@ -382,7 +385,7 @@ const HomePage = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                {currentMatch && (currentMatch.status === "In Progress" ||  convertToTodayDate(currentMatch.time) <= new Date()) ? (
+                {currentMatch && (currentMatch.status === "In Progress" || convertToTodayDate(currentMatch.time) <= new Date()) ? (
                   <Link
                     to="/trading"
                     className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
@@ -436,7 +439,7 @@ const HomePage = () => {
 
               </div>
             )}
-    
+
           </motion.div>
           <div className="pointer-events-none absolute bottom-0 left-0 w-full h-[50%] z-10 bg-gradient-to-t from-black to-transparent"></div>
         </div>
@@ -567,7 +570,7 @@ const HomePage = () => {
                     ? 'bg-black text-white dark:bg-white dark:text-black'
                     : 'bg-gray-400 text-white dark:bg-gray-600 dark:text-white'
                     }`}>
-                    {(match.status === 'In Progress' ||  convertToTodayDate(match.time) <= new Date()) && <Play className="w-3 h-3 mr-1" />}
+                    {(match.status === 'In Progress' || convertToTodayDate(match.time) <= new Date()) && <Play className="w-3 h-3 mr-1" />}
                     Live
                   </span>
                 </div>
