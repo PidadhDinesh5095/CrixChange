@@ -29,6 +29,7 @@ const Header = () => {
   const isHome = location.pathname === "/";
 
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isLoading } = useSelector((state) => state.currentMatch);
   const { isDark } = useSelector((state) => state.theme);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -66,7 +67,7 @@ const Header = () => {
    const navBg = scrolled || !isHome
     ? "bg-card/95 backdrop-blur-xl shadow-lg border-b border-border/50"
     : "bg-transparent";
-    const textColor = scrolled || !isHome ? "text-black dark:text-white" : "text-white dark:text-white";
+    const textColor = scrolled || !isHome || isLoading ? "text-black dark:text-white" : "text-white dark:text-white";
 
   return (
     <header className={` fixed top-0 left-0 w-full z-50 ${navBg} shadow-lg border-black dark:border-white `}>
