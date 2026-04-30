@@ -1,7 +1,8 @@
 import axios from 'axios';
-
 import dotenv from 'dotenv';
+
 dotenv.config();
+
 const optionsLive = {
   method: 'GET',
   url: process.env.SPORTS_API_LIVE_MATCHES_URL,
@@ -11,6 +12,7 @@ const optionsLive = {
     'Content-Type': 'application/json'
   }
 };
+
 const optionsUpcoming = {
   method: 'GET',
   url: process.env.SPORTS_API_UPCOMING_MATCHES_URL,
@@ -21,7 +23,6 @@ const optionsUpcoming = {
   }
 };
 
-
 export const getCurrentMatches = async (req, res) => {
   console.log('Fetching current matches from external API...');
 
@@ -29,27 +30,28 @@ export const getCurrentMatches = async (req, res) => {
     const liveMatchesResponse = await axios.request(optionsLive);
     const upcomingMatchesResponse = await axios.request(optionsUpcoming);
 
-
-    const LiveMatchData = liveMatchesResponse.data;
-    const UpcomingMatchData = upcomingMatchesResponse.data;
+    const LiveMatchData = liveMatchesResponse?.data;
+    const UpcomingMatchData = upcomingMatchesResponse?.data;
 
     const matches = [];
 
-    LiveMatchData.typeMatches.forEach(type => {
-      if (type.matchType === "League") {
-        type.seriesMatches.forEach(series => {
-          const wrapper = series.seriesAdWrapper;
+    
+    (LiveMatchData?.typeMatches || []).forEach(type => {
+      if (type?.matchType === "League") {
+        (type?.seriesMatches || []).forEach(series => {
+          const wrapper = series?.seriesAdWrapper;
 
           if (
             wrapper &&
-            wrapper.seriesName &&
-            wrapper.seriesName.toLowerCase().includes("indian premier league")
+            wrapper?.seriesName?.toLowerCase().includes("indian premier league")
           ) {
-            wrapper.matches.forEach(m => {
-              const info = m.matchInfo;
+            (wrapper?.matches || []).forEach(m => {
+              const info = m?.matchInfo;
 
-              if (info.state === "Complete") return;
-              const dateObj = new Date(Number(info.startDate));
+              if (!info) return;
+              if (info?.state === "Complete") return;
+
+              const dateObj = new Date(Number(info?.startDate));
 
               const date = dateObj.toLocaleDateString("en-IN", {
                 day: "2-digit",
@@ -64,37 +66,38 @@ export const getCurrentMatches = async (req, res) => {
               });
 
               matches.push({
-                id: info.matchId,
-                match: `${info.team1.teamSName} vs ${info.team2.teamSName}`,
-                team1: info.team1.teamSName.toUpperCase() || "",
-                team2: info.team2.teamSName.toUpperCase() || "",
+                id: info?.matchId,
+                match: `${info?.team1?.teamSName} vs ${info?.team2?.teamSName}`,
+                team1: info?.team1?.teamSName?.toUpperCase() || "",
+                team2: info?.team2?.teamSName?.toUpperCase() || "",
                 date,
                 time,
-                venue: info.venueInfo.city,
-                ground: info.venueInfo.ground,
-                status: info.state
+                venue: info?.venueInfo?.city || "",
+                ground: info?.venueInfo?.ground || "",
+                status: info?.state
               });
-
             });
           }
         });
       }
     });
-    UpcomingMatchData.typeMatches.forEach(type => {
-      if (type.matchType === "League") {
-        type.seriesMatches.forEach(series => {
-          const wrapper = series.seriesAdWrapper;
+
+    
+    (UpcomingMatchData?.typeMatches || []).forEach(type => {
+      if (type?.matchType === "League") {
+        (type?.seriesMatches || []).forEach(series => {
+          const wrapper = series?.seriesAdWrapper;
 
           if (
             wrapper &&
-            wrapper.seriesName &&
-            wrapper.seriesName.toLowerCase().includes("indian premier league")
+            wrapper?.seriesName?.toLowerCase().includes("indian premier league")
           ) {
-            wrapper.matches.forEach(m => {
-              const info = m.matchInfo;
+            (wrapper?.matches || []).forEach(m => {
+              const info = m?.matchInfo;
 
-              // Convert timestamp → IST
-              const dateObj = new Date(Number(info.startDate));
+              if (!info) return;
+
+              const dateObj = new Date(Number(info?.startDate));
 
               const time = dateObj.toLocaleTimeString("en-IN", {
                 hour: "2-digit",
@@ -111,39 +114,33 @@ export const getCurrentMatches = async (req, res) => {
               });
 
               matches.push({
-                id: info.matchId,
-                match: `${info.team1.teamSName} vs ${info.team2.teamSName}`,
-                team1: info.team1?.teamSName?.toUpperCase() || "",
-                team2: info.team2?.teamSName?.toUpperCase() || "",
+                id: info?.matchId,
+                match: `${info?.team1?.teamSName} vs ${info?.team2?.teamSName}`,
+                team1: info?.team1?.teamSName?.toUpperCase() || "",
+                team2: info?.team2?.teamSName?.toUpperCase() || "",
                 date,
                 time,
-                venue: info.venueInfo.city,
-                ground: info.venueInfo.ground,
-                status: info.state
+                venue: info?.venueInfo?.city || "",
+                ground: info?.venueInfo?.ground || "",
+                status: info?.state
               });
-
             });
           }
         });
       }
     });
+
     console.log('Current matches fetched successfully:', matches);
 
-
-    res.status(200).json(
-      {
-        succes: true,
-        message: "Current matches retrieved successfully",
-        matches
-      }
-    );
-    
-
-
-
+    res.status(200).json({
+      success: true,
+      message: "Current matches retrieved successfully",
+      matches
+    });
 
   } catch (error) {
     console.error('Error fetching current matches:', error.message);
+
     res.status(500).json({
       success: false,
       message: 'Error fetching current matches',
@@ -151,4 +148,3 @@ export const getCurrentMatches = async (req, res) => {
     });
   }
 };
-
