@@ -16,9 +16,11 @@ import {
   Clock,
   ArrowUpRight,
   Play,
+  Dot,
   Building2,
   Globe,
-  Award
+  Award,
+  DotIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { use } from 'react';
@@ -114,7 +116,7 @@ const HomePage = () => {
     "RR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
     "RR_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
     "RR_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
-
+    "RR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
     "RR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
     "RR_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
     "RR_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
@@ -223,7 +225,7 @@ const HomePage = () => {
         return dateA - dateB;
       });
 
-      // 🔥 remove first + limit to 3
+      // remove first + limit to 3
       return sorted.slice(1, 4);
     }
 
@@ -282,7 +284,7 @@ const HomePage = () => {
           localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
           localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
 
-          console.log("Fetched and set matches from API:", transformedMatches);
+          
         } else {
           console.error(result.payload || "Failed to fetch matches");
         }
@@ -566,12 +568,15 @@ const HomePage = () => {
                   <h3 className="text-lg font-bold text-black dark:text-white">
                     {match.title}
                   </h3>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-bold ${match.status === 'In Progress'
-                    ? 'bg-black text-white dark:bg-white dark:text-black'
-                    : 'bg-gray-400 text-white dark:bg-gray-600 dark:text-white'
-                    }`}>
-                    {(match.status === 'In Progress' || convertToTodayDate(match.time) <= new Date()) && <Play className="w-3 h-3 mr-1" />}
-                    Live
+                  <span className='inline-flex items-center px-3 py-1 rounded-sm text-md font-bold text-black dark:text-white'>
+                    {(match.status === 'In Progress' || new Date(match.time) <= new Date()) ? (
+                      <>
+                        <Dot className="w-10 h-10 animate-pulse text-red-500 " />
+                        Live
+                      </>
+                    ) : (
+                      `Starts at ${match.time}`
+                    )}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">

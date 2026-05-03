@@ -22,20 +22,21 @@ const optionsUpcoming = {
     'Content-Type': 'application/json'
   }
 };
+const matches = [];
 
 export const getCurrentMatches = async (req, res) => {
-  console.log('Fetching current matches from external API...');
+
 
   try {
-    const liveMatchesResponse = await axios.request(optionsLive);
-    const upcomingMatchesResponse = await axios.request(optionsUpcoming);
+   const liveMatchesResponse = await axios.request(optionsLive);
+   const upcomingMatchesResponse = await axios.request(optionsUpcoming);
 
     const LiveMatchData = liveMatchesResponse?.data;
-    const UpcomingMatchData = upcomingMatchesResponse?.data;
-
-    const matches = [];
+   const UpcomingMatchData = upcomingMatchesResponse?.data;
 
     
+   
+
     (LiveMatchData?.typeMatches || []).forEach(type => {
       if (type?.matchType === "League") {
         (type?.seriesMatches || []).forEach(series => {
@@ -56,13 +57,15 @@ export const getCurrentMatches = async (req, res) => {
               const date = dateObj.toLocaleDateString("en-IN", {
                 day: "2-digit",
                 month: "short",
-                year: "numeric"
+                year: "numeric",
+                timeZone: "Asia/Kolkata"
               });
 
               const time = dateObj.toLocaleTimeString("en-IN", {
                 hour: "2-digit",
                 minute: "2-digit",
-                hour12: true
+                hour12: true,
+                timeZone: "Asia/Kolkata"
               });
 
               matches.push({
@@ -82,7 +85,7 @@ export const getCurrentMatches = async (req, res) => {
       }
     });
 
-    
+
     (UpcomingMatchData?.typeMatches || []).forEach(type => {
       if (type?.matchType === "League") {
         (type?.seriesMatches || []).forEach(series => {
@@ -129,8 +132,8 @@ export const getCurrentMatches = async (req, res) => {
         });
       }
     });
+    console.log('Matches retrieved:', matches);
 
-    console.log('Current matches fetched successfully:', matches);
 
     res.status(200).json({
       success: true,
