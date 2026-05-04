@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 
 // Import configurations and middleware
 import connectDB from './config/database.js';
+import { connectRedis } from './config/redis.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 //import { setupSocketHandlers } from './socket/socketHandlers.js';
 
@@ -43,7 +44,7 @@ const io = new Server(server, {
 
 // Connect to MongoDB
 connectDB();
-
+await connectRedis();
 // Security middleware
 app.use(helmet());
 app.use(compression());
