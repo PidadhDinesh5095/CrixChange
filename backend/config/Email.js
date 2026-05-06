@@ -8,16 +8,11 @@ let transporter;
 export const connectMailServer = async () => {
   try {
     transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+     service: process.env.EMAIL_SERVICE,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
     });
 
     await transporter.verify();
