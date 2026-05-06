@@ -38,7 +38,7 @@ const currentMatchSlice = createSlice({
         .addCase(getMatches.fulfilled, (state, action) => {
             state.isLoading = false;
             state.liveMatches = action.payload.matches || [];
-            console.log("Matches fetched successfully:", state.liveMatches); // Debug log
+            
         })
         .addCase(getMatches.rejected, (state, action) => {
             state.isLoading = false;

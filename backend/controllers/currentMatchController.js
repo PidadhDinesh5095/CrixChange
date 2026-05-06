@@ -163,6 +163,7 @@ export const getCurrentMatches = async (req, res) => {
 
     if (cached) {
       console.log('[Cache] HIT — serving ipl:matches from Redis');
+      console.log(getAdaptiveTTL(cached) );  
       
       return res.status(200).json({
         success: true,
@@ -197,13 +198,13 @@ export const getCurrentMatches = async (req, res) => {
     console.log(`[IST]   Current IST time  = ${nowIST.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`);
     console.log(`[Cache] TTL = ${ttlSeconds}s | matches = ${matches.length}`);
 
-    await redisClient.set(CACHE_KEY, JSON.stringify(matches), { EX: ttlSeconds });
+    await redisClient.set(CACHE_KEY, JSON.stringify(matches), { ex: ttlSeconds });
 
     // ── 5. Status snapshot for future SSE diff ────────────────────────────
     const snapshot = {};
     matches.forEach((m) => { snapshot[m.id] = m.status; });
     await redisClient.set(CACHE_STATUS_KEY, JSON.stringify(snapshot), {
-      EX: ttlSeconds * 10,
+      ex: ttlSeconds * 10,
     });
 
     return res.status(200).json({

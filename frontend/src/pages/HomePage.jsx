@@ -25,8 +25,8 @@ import {
 import toast from 'react-hot-toast';
 
 // ─── Cache constants ──────────────────────────────────────────────────────────
-const CACHE_KEY        = 'ipl_matches';
-const CACHE_TIME_KEY   = 'ipl_matches_time';
+const CACHE_KEY = 'ipl_matches';
+const CACHE_TIME_KEY = 'ipl_matches_time';
 const CACHE_STATUS_KEY = 'ipl_matches_status'; // snapshot: { [matchId]: status }
 
 // ─── Adaptive TTL ─────────────────────────────────────────────────────────────
@@ -94,116 +94,116 @@ const HomePage = () => {
   const [liveMatches, setLiveMatches] = useState([]);
 
   const tickerData = [
-    { team: 'MI',   price: 125.50, change:  2.5 },
-    { team: 'CSK',  price: 142.75, change: -1.8 },
-    { team: 'RCB',  price:  98.25, change:  5.2 },
-    { team: 'DC',   price: 118.90, change: -3.1 },
-    { team: 'GT',   price: 156.75, change:  4.8 },
-    { team: 'RR',   price: 134.20, change: -2.3 },
-    { team: 'KKR',  price: 112.45, change:  1.7 },
-    { team: 'PBKS', price:  89.60, change: -4.2 },
+    { team: 'MI', price: 125.50, change: 2.5 },
+    { team: 'CSK', price: 142.75, change: -1.8 },
+    { team: 'RCB', price: 98.25, change: 5.2 },
+    { team: 'DC', price: 118.90, change: -3.1 },
+    { team: 'GT', price: 156.75, change: 4.8 },
+    { team: 'RR', price: 134.20, change: -2.3 },
+    { team: 'KKR', price: 112.45, change: 1.7 },
+    { team: 'PBKS', price: 89.60, change: -4.2 },
   ];
 
   const matchImages = {
-    "CSK_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i",
-    "CSK_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
-    "CSK_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
-    "CSK_vs_SRH":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
-    "CSK_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
-    "CSK_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "CSK_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i",
+    "CSK_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "CSK_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "CSK_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "CSK_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "CSK_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
     "CSK_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
-    "CSK_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
-    "CSK_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
+    "CSK_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "CSK_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
 
-    "MI_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6368/1742488016368-i",
-    "MI_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
-    "MI_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
-    "MI_vs_SRH":  "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
-    "MI_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
-    "MI_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "MI_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6368/1742488016368-i",
+    "MI_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    "MI_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "MI_vs_SRH": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "MI_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "MI_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
     "MI_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
-    "MI_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
-    "MI_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+    "MI_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "MI_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
 
-    "RCB_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
-    "RCB_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
-    "RCB_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
-    "RCB_vs_SRH":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
-    "RCB_vs_DC":   "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
-    "RCB_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RCB_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "RCB_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    "RCB_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    "RCB_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "RCB_vs_DC": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "RCB_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
     "RCB_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
-    "RCB_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
-    "RCB_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+    "RCB_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "RCB_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
 
-    "KKR_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
-    "KKR_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
-    "KKR_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
-    "KKR_vs_SRH":  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr0nvynAcabDcOrKXyKz95TeJzfln2eI6U5w&s",
-    "KKR_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
-    "KKR_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "KKR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "KKR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "KKR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    "KKR_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr0nvynAcabDcOrKXyKz95TeJzfln2eI6U5w&s",
+    "KKR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "KKR_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
     "KKR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
-    "KKR_vs_GT":   "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
-    "KKR_vs_LSG":  "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+    "KKR_vs_GT": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "KKR_vs_LSG": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
 
-    "SRH_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
-    "SRH_vs_MI":   "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
-    "SRH_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
-    "SRH_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8284/1743605638284-i",
-    "SRH_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2803/1776584212803-i",
-    "SRH_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9355/1776029099355-i",
+    "SRH_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "SRH_vs_MI": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "SRH_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "SRH_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8284/1743605638284-i",
+    "SRH_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2803/1776584212803-i",
+    "SRH_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9355/1776029099355-i",
     "SRH_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
-    "SRH_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4309/1743868234309-i",
-    "SRH_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+    "SRH_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4309/1743868234309-i",
+    "SRH_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
 
-    "DC_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
-    "DC_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
-    "DC_vs_RCB":  "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
-    "DC_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
-    "DC_vs_SRH":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i",
-    "DC_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
+    "DC_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "DC_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "DC_vs_RCB": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "DC_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "DC_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i",
+    "DC_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
     "DC_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
-    "DC_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
-    "DC_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+    "DC_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "DC_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
 
-    "RR_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
-    "RR_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
-    "RR_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
-    "RR_vs_KKR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
-    "RR_vs_SRH":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
-    "RR_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
+    "RR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "RR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "RR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RR_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "RR_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
+    "RR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
     "RR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
-    "RR_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
-    "RR_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+    "RR_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "RR_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
 
     "PBKS_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
-    "PBKS_vs_MI":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
+    "PBKS_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
     "PBKS_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
     "PBKS_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
     "PBKS_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
-    "PBKS_vs_DC":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
-    "PBKS_vs_RR":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
-    "PBKS_vs_GT":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
+    "PBKS_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
+    "PBKS_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
+    "PBKS_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
     "PBKS_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
 
-    "GT_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
-    "GT_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
-    "GT_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
-    "GT_vs_KKR":  "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
-    "GT_vs_SRH":  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9FELbajMb2GvuRFzICyemj4Pnro6iFjLiXw&s",
-    "GT_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
-    "GT_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "GT_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "GT_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "GT_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "GT_vs_KKR": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "GT_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9FELbajMb2GvuRFzICyemj4Pnro6iFjLiXw&s",
+    "GT_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "GT_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
     "GT_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
-    "GT_vs_LSG":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+    "GT_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
 
-    "LSG_vs_CSK":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
-    "LSG_vs_MI":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
-    "LSG_vs_RCB":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
-    "LSG_vs_KKR":  "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
-    "LSG_vs_SRH":  "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
-    "LSG_vs_DC":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
-    "LSG_vs_RR":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+    "LSG_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
+    "LSG_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+    "LSG_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+    "LSG_vs_KKR": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+    "LSG_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+    "LSG_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+    "LSG_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
     "LSG_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
-    "LSG_vs_GT":   "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+    "LSG_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
   };
 
   const convertToTodayDate = (timeStr) => {
@@ -231,6 +231,7 @@ const HomePage = () => {
 
   // Transform raw API matches → UI shape (unchanged from your original)
   const transformMatches = (matchesData) => {
+
     return matchesData?.map((m) => {
       const key = `${m.team1}_vs_${m.team2}`;
       return {
@@ -297,13 +298,15 @@ const HomePage = () => {
         const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
 
         if (cachedData && cachedTime) {
+
           const matchesData = JSON.parse(cachedData);
-          const ttl        = getAdaptiveTTL(matchesData);   // ← adaptive, not fixed
-        
-          const isExpired  = Date.now() - Number(cachedTime) > ttl;
+          const ttl = getAdaptiveTTL(matchesData);   // ← adaptive, not fixed
+
+          const isExpired = Date.now() - Number(cachedTime) > ttl;
+
 
           if (!isExpired) {
-            // Cache is still fresh — render immediately and stop here
+
             setLiveMatches(transformMatches(matchesData));
             return;
           }
@@ -312,25 +315,27 @@ const HomePage = () => {
 
       // Cache miss / expired / forced → call the API via Redux
       try {
+
         const result = await dispatch(getMatches());
 
         if (getMatches.fulfilled.match(result)) {
+
           const matchesData = result.payload?.matches || [];
+
 
           // Only re-render and write to storage if something actually changed.
           // On a forced refresh (SSE eviction) we always update.
-          if (forceRefresh || hasStatusChanged(matchesData)) {
-            setLiveMatches(transformMatches(matchesData));
-            localStorage.setItem(CACHE_KEY,      JSON.stringify(matchesData));
-            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-            saveStatusSnapshot(matchesData);  // update { id → status } snapshot
-          } else {
-            // No status change — just bump the timestamp so the TTL resets
-            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-          }
-        } else {
-          console.error(result.payload || 'Failed to fetch matches');
+
+
+          setLiveMatches(transformMatches(matchesData));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+
+
+
+
         }
+
       } catch (err) {
         console.error('Error fetching matches:', err);
       }
@@ -376,10 +381,10 @@ const HomePage = () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   const stats = [
-    { value: '₹500Cr+', label: 'DAILY VOLUME',   icon: BarChart3 },
-    { value: '50K+',    label: 'ACTIVE TRADERS',  icon: Users     },
-    { value: '99.99%',  label: 'UPTIME',          icon: Shield    },
-    { value: '<0.1ms',  label: 'LATENCY',         icon: Zap       },
+    { value: '₹500Cr+', label: 'DAILY VOLUME', icon: BarChart3 },
+    { value: '50K+', label: 'ACTIVE TRADERS', icon: Users },
+    { value: '99.99%', label: 'UPTIME', icon: Shield },
+    { value: '<0.1ms', label: 'LATENCY', icon: Zap },
   ];
 
   const features = [
@@ -425,7 +430,7 @@ const HomePage = () => {
           style={{
             backgroundImage: `url(${currentMatch?.image ||
               'https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i'
-            })`,
+              })`,
           }}
         >
           <div className="pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent" />
@@ -449,33 +454,53 @@ const HomePage = () => {
                   ) : 'No Match'}
                 </div>
                 <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
-                  {currentMatch
-                    ? currentMatch.status === 'In Progress'
-                      ? 'Start trading now - match is live!'
-                      : `Match starts at ${currentMatch.time}`
-                    : 'No matches available'}
+                  {
+                    currentMatch
+                      ? currentMatch.status === 'In Progress'
+                        ? 'Start trading now - match is live!'
+                        : currentMatch.status === 'Preview'
+                          ? `Match starts at ${currentMatch.time}`
+                          : currentMatch.status
+                      : 'No matches available'
+                  }
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                {currentMatch &&
-                (currentMatch.status === 'In Progress' ||
-                  convertToTodayDate(currentMatch.time) <= new Date()) ? (
-                  <Link
-                    to="/trading"
-                    className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
-                  >
-                    START TRADING
-                    <ChevronRight className="ml-2 w-5 h-5" />
-                  </Link>
-                ) : (
-                  <button
-                    disabled
-                    className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
-                  >
-                    STARTS AT {currentMatch?.time || '--'}
-                  </button>
-                )}
+                {
+                  currentMatch ? (
+                    currentMatch.status === 'Preview' ? (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                      >
+                        STARTS AT {currentMatch.time || '--'}
+                      </button>
+                    ) : currentMatch.status === 'In Progress' ? (
+                      <Link
+                        to="/trading"
+                        className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                      >
+                        START TRADING
+                        <ChevronRight className="ml-2 w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                      >
+                        {currentMatch.status}
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                    >
+                      No matches available
+                    </button>
+                  )
+                }
                 <Link
                   to="/analytics"
                   className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
@@ -547,10 +572,10 @@ const HomePage = () => {
                   <h3 className="text-black dark:text-white font-bold mb-4 text-lg">LIVE MARKET DATA</h3>
                   <div className="space-y-3">
                     {[
-                      { symbol: 'MI',  price: '125.50', change: '+2.5', volume: '15.4K', high: '128.75', low: '122.30' },
+                      { symbol: 'MI', price: '125.50', change: '+2.5', volume: '15.4K', high: '128.75', low: '122.30' },
                       { symbol: 'CSK', price: '142.75', change: '-1.8', volume: '18.7K', high: '145.20', low: '140.50' },
-                      { symbol: 'RCB', price: '98.25',  change: '+5.2', volume: '12.3K', high: '102.80', low: '95.40'  },
-                      { symbol: 'DC',  price: '118.90', change: '-3.1', volume: '9.8K',  high: '122.45', low: '116.80' },
+                      { symbol: 'RCB', price: '98.25', change: '+5.2', volume: '12.3K', high: '102.80', low: '95.40' },
+                      { symbol: 'DC', price: '118.90', change: '-3.1', volume: '9.8K', high: '122.45', low: '116.80' },
                     ].map((stock, index) => (
                       <div key={index} className="grid grid-cols-6 gap-4 text-sm">
                         <span className="text-black dark:text-white font-bold">{stock.symbol}</span>
@@ -574,7 +599,7 @@ const HomePage = () => {
                     <button className="bg-white dark:bg-black text-black dark:text-white py-3 px-4 rounded-sm font-bold text-sm border border-black dark:border-white">SELL</button>
                   </div>
                   <input type="text" placeholder="QUANTITY" className="w-full bg-white dark:bg-black text-black dark:text-white p-3 rounded-sm text-sm border border-black dark:border-white" />
-                  <input type="text" placeholder="PRICE"    className="w-full bg-white dark:bg-black text-black dark:text-white p-3 rounded-sm text-sm border border-black dark:border-white" />
+                  <input type="text" placeholder="PRICE" className="w-full bg-white dark:bg-black text-black dark:text-white p-3 rounded-sm text-sm border border-black dark:border-white" />
                   <button className="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-sm font-bold">EXECUTE ORDER</button>
                 </div>
               </div>
