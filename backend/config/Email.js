@@ -5,7 +5,7 @@ dotenv.config();
 
 let transporter;
 
-export const connectMailServer = async () => {
+export const connectMailServer =  () => {
   try {
     transporter = nodemailer.createTransport({
      service: process.env.EMAIL_SERVICE,
@@ -14,8 +14,6 @@ export const connectMailServer = async () => {
       pass: process.env.EMAIL_PASS
     }
     });
-
-    await transporter.verify();
 
     console.log("✅ Mail server connected");
   } catch (error) {

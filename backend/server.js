@@ -46,7 +46,8 @@ const io = new Server(server, {
 // Connect to MongoDB
 connectDB();
 await connectRedis();
-await connectMailServer();
+
+ connectMailServer();
 // Security middleware
 app.use(helmet());
 app.use(compression());
