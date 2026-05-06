@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 // Import configurations and middleware
 import connectDB from './config/database.js';
 import { connectRedis } from './config/redis.js';
+import { connectMailServer } from './config/Email.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 //import { setupSocketHandlers } from './socket/socketHandlers.js';
 
@@ -45,6 +46,7 @@ const io = new Server(server, {
 // Connect to MongoDB
 connectDB();
 await connectRedis();
+await connectMailServer();
 // Security middleware
 app.use(helmet());
 app.use(compression());
@@ -96,7 +98,7 @@ app.use('/api/payments', paymentRoutes);**/}
 
 // Health check endpoint
 app.get('/', (req, res) => {
-  res.send('Welcome to the Betting Platform API');
+  res.send('Welcome to the crixchange Platform API');
 });
 app.get('/api/health', (req, res) => {
   res.status(200).json({

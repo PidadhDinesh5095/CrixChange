@@ -3,8 +3,9 @@ import User from '../models/User.js';
 import Wallet from '../models/Wallet.js';
 import Blacklist from '../models/Blacklist.js'; // import Blacklist model
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth.js';
-import { sendEmail } from '../utils/sendEmail.js';
+
 import { validateRegister, validateLogin } from '../utils/validation.js';
+import { sendWelcomeEmail, sendVerificationEmail ,sendPasswordChangedEmail,sendPasswordResetEmail,sendEmailVerificationSuccessEmail} from '../utils/sendEmail.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -86,20 +87,7 @@ export const register = async (req, res) => {
 
   // Send verification email
   const verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${verificationToken}`;
-  const message = `
-    <div style="font-family: Darker Grotesque; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>
-      <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Please click the button below to verify your email address:</p>
-      <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
-        Verify Email
-      </a>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">This link will expire in <span style="color:#fff;font-weight:bold;">24 hours</span>.</p>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 8px;">If you didn't create this account, please ignore this email.</p>
-      <div style="margin-top:32px; text-align:center;">
-        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
-      </div>
-    </div>
-  `;
+ 
 
   
   const token = generateToken(user._id);
@@ -125,11 +113,10 @@ export const register = async (req, res) => {
     }
   });
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Verify Your Email - CrixChange',
-      message
-    });
+    
+    await sendWelcomeEmail(user.email,user.firstName);
+    console.log("Welcome email sent successfully");
+    await sendVerificationEmail(user.email,user.firstName, verificationUrl);
   } catch (error) {
     console.error('Email sending failed:', error);
     // Don't fail registration if email fails
@@ -303,49 +290,14 @@ export const changePassword = async (req, res) => {
   await user.save();
 const changePasswordUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/profile`;
 
-  const message = `
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">
-    Password Changed
-  </h1>
-
-  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
-    Your password was changed successfully.
-  </p>
-
-  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
-    If this wasn’t you, please secure your account immediately by changing your password using the link below.
-  </p>
-
-  <a href="${changePasswordUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px;">
-    Change Password
-  </a>
-
-  <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">
-    If you recognize this activity, no further action is required.
-  </p>
-
-  <div style="margin-top:32px; text-align:center;">
-    <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">
-      CRIXCHANGE
-    </span>
-  </div>
-</div>
-
-  `;
  
-
 
   res.json({
     success: true,
     message: 'Password changed successfully'
   });
    try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Password Changed- CrixChange',
-      message
-    });
+    await sendPasswordChangedEmail(user.email, changePasswordUrl);
 
    
   } catch (error) {
@@ -384,20 +336,7 @@ export const forgotPassword = async (req, res) => {
   // Create reset URL
   const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
 
-  const message = `
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Password Reset Request</h1>
-      <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">You have requested a password reset. Please click the button below to reset your password:</p>
-      <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
-        Reset Password
-      </a>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">This link will expire in <span style="color:#fff;font-weight:bold;">10 minutes</span>.</p>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 8px;">If you didn't request this, please ignore this email.</p>
-      <div style="margin-top:32px; text-align:center;">
-        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
-      </div>
-    </div>
-  `;
+ 
 
   try {
     
@@ -406,11 +345,7 @@ export const forgotPassword = async (req, res) => {
       success: true,
       message: 'Password reset email sent'
     });
-    await sendEmail({
-      email: user.email,
-      subject: 'Password Reset - CrixChange',
-      message
-    });
+    await sendPasswordResetEmail(user.email,user.firstName, resetUrl);
   } catch (error) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -472,6 +407,12 @@ export const resetPassword = async (req, res) => {
     message: 'Password reset successful',
     data: { token }
   });
+    try {
+    const changePasswordUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/profile`;
+    await sendPasswordChangedEmail(user.email, changePasswordUrl);
+  } catch (error) {
+    console.error('Password changed email sending failed:', error);
+  }
 };
 
 // @desc    Verify email
@@ -502,31 +443,14 @@ export const verifyEmail = async (req, res) => {
 
   // Send KYC completion email
   const kycUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/kyc`;
-  const kycMessage = `
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Complete Your KYC</h1>
-      <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Your email has been verified successfully! To access all features, please complete your KYC by clicking the button below:</p>
-      <a href="${kycUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
-        Complete KYC
-      </a>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">KYC is required for trading and withdrawals.</p>
-      <div style="margin-top:32px; text-align:center;">
-        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
-      </div>
-    </div>
-  `;
-  
+ 
 
   res.json({
     success: true,
     message: 'Email verified successfullyy'
   });
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Complete Your KYC - CrixChange',
-      message: kycMessage
-    });
+    await sendEmailVerificationSuccessEmail(user.email, kycUrl);
   } catch (error) {
     console.error('KYC email sending failed:', error);
 
@@ -570,20 +494,7 @@ export const resendVerification = async (req, res) => {
 
   // Send verification email
   const verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${verificationToken}`;
-  const message = `
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Welcome to CrixChange!</h1>
-      <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Please click the button below to verify your email address:</p>
-      <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
-        Verify Email
-      </a>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">This link will expire in <span style="color:#fff;font-weight:bold;">24 hours</span>.</p>
-      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 8px;">If you didn't create this account, please ignore this email.</p>
-      <div style="margin-top:32px; text-align:center;">
-        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
-      </div>
-    </div>
-  `;
+ 
 
   try {
    
@@ -592,11 +503,7 @@ export const resendVerification = async (req, res) => {
       success: true,
       message: 'Verification email sent'
     });
-     await sendEmail({
-      email: user.email,
-      subject: 'Verify Your Email - CrixChange',
-      message
-    });
+     await sendVerificationEmail(user.email, verificationUrl);
   } catch (error) {
     return res.status(500).json({
       success: false,

@@ -1,41 +1,12 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 
-dotenv.config();
-// Create transporter
 
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
+import { sendEmail } from '../config/Email.js';
 
-// Send email function
-export const sendEmail = async (options) => {
-  try {
-    const transporter = createTransporter();
 
-    const mailOptions = {
-      from: ` <crixchangeindia@gmail.com>`,
-      to: options.email,
-      subject: options.subject,
-      html: options.message
-    };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Email sending failed:', error);
-    throw error;
-  }
-};
 
-// Email templates
+
+
 export const emailTemplates = {
   welcome: (name) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -91,6 +62,19 @@ export const emailTemplates = {
       </div>
     </div>
   `,
+  emailVerificationSuccess: (kycUrl) =>  `
+    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
+      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Complete Your KYC</h1>
+      <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Your email has been verified successfully! To access all features, please complete your KYC by clicking the button below:</p>
+      <a href="${kycUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px; transition: background 0.2s;">
+        Complete KYC
+      </a>
+      <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">KYC is required for trading and withdrawals.</p>
+      <div style="margin-top:32px; text-align:center;">
+        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">CRIXCHANGE</span>
+      </div>
+    </div>
+  `,
 
   passwordReset: (name, resetUrl) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -118,6 +102,36 @@ export const emailTemplates = {
         </p>
       </div>
     </div>
+  `,
+  passwordChanged: (changePasswordUrl) => `
+    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">
+    Password Changed
+  </h1>
+
+  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
+    Your password was changed successfully.
+  </p>
+
+  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
+    If this wasn’t you, please secure your account immediately by changing your password using the link below.
+  </p>
+
+  <a href="${changePasswordUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px;">
+    Change Password
+  </a>
+
+  <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">
+    If you recognize this activity, no further action is required.
+  </p>
+
+  <div style="margin-top:32px; text-align:center;">
+    <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">
+      CRIXCHANGE
+    </span>
+  </div>
+</div>
+
   `,
 
   kycApproved: (name) => `
@@ -285,6 +299,13 @@ export const sendVerificationEmail = async (email, name, verificationUrl) => {
     message: emailTemplates.emailVerification(name, verificationUrl)
   });
 };
+export const sendEmailVerificationSuccessEmail = async (email, kycUrl) => {
+  await sendEmail({
+    email,
+    subject: 'Email Verified - Complete Your KYC',
+    message: emailTemplates.emailVerificationSuccess(kycUrl)
+  });
+};
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, name, resetUrl) => {
@@ -294,7 +315,13 @@ export const sendPasswordResetEmail = async (email, name, resetUrl) => {
     message: emailTemplates.passwordReset(name, resetUrl)
   });
 };
-
+export const sendPasswordChangedEmail = async (email, changePasswordUrl) => {
+  await sendEmail({
+    email,
+    subject: 'Your Password Has Been Changed - CrixChange',
+    message: emailTemplates.passwordChanged(changePasswordUrl)
+  });
+}
 // Send KYC approval email
 export const sendKYCApprovalEmail = async (email, name) => {
   await sendEmail({
