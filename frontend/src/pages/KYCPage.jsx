@@ -361,7 +361,8 @@ const KYCPage = () => {
  
 
   useEffect(() => {
-    if ( !(user=== null || token === null) ) {
+    
+    if ( (user=== null || token === null) ) {
       toast.error('You must be logged in to access KYC. Redirecting to login...');
       setTimeout(() => {navigate('/login');}, 3000);
     }else if(user!==null && user.kycStatus === 'approved'){
@@ -888,7 +889,7 @@ const KYCPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black py-8">
+    <div className="min-h-screen mt-10 bg-gray-50 dark:bg-black py-8">
       <div className="max-w-4xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
         <motion.div
