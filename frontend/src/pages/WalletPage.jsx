@@ -21,6 +21,7 @@ import {
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { use } from 'react';
+import axios from 'axios';
 
 const WalletPage = () => {
   const tableEndRef = useRef(null);
@@ -32,7 +33,8 @@ const WalletPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+
   const { isLoading, isDepositing, isWithdrawing, balance, frozenBalance, totalDeposited, totalWithdrawn, transactions, isgettingTransactions, totalTransactions } = useSelector((state) => state.wallet);
 
 
@@ -139,7 +141,64 @@ const WalletPage = () => {
         amount: parseFloat(depositAmount),
         paymentMethod: selectedPaymentMethod
       };
+      console.log(`importing Razorpay with key: wvfiufh`); //debug log
       const result = await dispatch(depositFunds(formData));
+      const data = result.payload.order;
+      console.log('Deposit result:', result); //debug log
+
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'CrixChange',
+        description: 'Deposit Funds',
+        order_id: data.id,
+
+        handler: async function (response) {
+
+          console.log(response);
+
+          try {
+
+            const verifyResponse = await axios.post(
+              'http://localhost:5000/api/wallet/verify-payment',
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                userId: user.id
+              }
+            );
+
+            console.log(verifyResponse.data);
+
+            toast.success('Payment verified successfully');
+
+          } catch (error) {
+
+            console.log(error.response?.data || error);
+
+            toast.error('Payment verification failed',);
+          }
+        },
+
+        timeout: 300000,
+
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: user.phone
+        },
+
+        theme: {
+          color: '#F37254'
+        }
+      };
+
+
+      const rzp = new Razorpay(options);
+      rzp.open();
       if (depositFunds.fulfilled.match(result)) {
         toast.success('Deposit successful!');
       } else if (depositFunds.rejected.match(result)) {
@@ -147,7 +206,7 @@ const WalletPage = () => {
       }
     }
     catch (error) {
-      toast.error('Error occurred ');
+      toast.error('Error occurred  here' + error);
     }
 
 
@@ -698,9 +757,9 @@ const WalletPage = () => {
                 {/* Load More Button */}
                 <div className="flex justify-center py-4">
                   <button
-                    disabled={isgettingTransactions }
+                    disabled={isgettingTransactions}
 
-                    className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors ${walletData.transactions.length >= totalTransactions && walletData.transactions.length!=10 ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors ${walletData.transactions.length >= totalTransactions && walletData.transactions.length != 10 ? 'cursor-not-allowed opacity-50' : ''}`}
                     onClick={() => {
                       dispatch(getTransactionHistory({ skip: walletData.transactions.length, limit: 10 }));
                     }}
@@ -710,7 +769,7 @@ const WalletPage = () => {
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
                         Loading more transactions...
                       </div>
-                    ) : walletData.transactions.length >= totalTransactions && walletData.transactions.length!=10 ? (
+                    ) : walletData.transactions.length >= totalTransactions && walletData.transactions.length != 10 ? (
                       "No more transactions"
                     ) : (
                       "Load More Transactions"

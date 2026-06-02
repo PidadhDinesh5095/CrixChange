@@ -26,6 +26,7 @@ const ProfilePage = () => {
   const dispatch = useDispatch();
   const { user, isLoading } = useSelector((state) => state.auth);
   const { isDark } = useSelector((state) => state.theme);
+  
 
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);

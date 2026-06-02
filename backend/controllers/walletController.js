@@ -1,5 +1,14 @@
 import Wallet from '../models/Wallet.js';
 import Transaction from '../models/Transaction.js';
+import Razorpay from 'razorpay';
+import dotenv from 'dotenv';
+import crypto from 'crypto';
+dotenv.config();
+const razorpayInstance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 import { sendDepositConfirmationEmail, sendWithdrawalConfirmationEmail } from '../utils/sendEmail.js';
 export const depositFunds = async (req, res) => {
   try {
@@ -14,35 +23,47 @@ export const depositFunds = async (req, res) => {
       });
     }
 
-    try {
-      await wallet.credit(amount, paymentMethod, 'Deposit');
-    } catch (error) {
-      console.error('Error crediting wallet:', error);
-      throw error;
-
-    }
-
-    // Fetch top 10 latest deposit/withdrawal transactions
-
-    const transactions = await Transaction.find({
-      userId: req.user.id,
-      type: { $in: ['credit', 'debit'] }
-    })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-
+    const options = {
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+    };
+    const order = await razorpayInstance.orders.create(options);
+    console.log("Order created:", order);
     res.status(200).json({
       success: true,
-      message: 'Funds deposited successfully',
-      wallet,
-      transactions
+      message: 'Order created successfully',
+      order
     });
-    try {
-      await sendDepositConfirmationEmail(req.user.email, req.user.firstName, amount, paymentMethod);
-    } catch (error) {
-      console.error('Error sending deposit confirmation email:', error);
-    }
+    // try {
+    //   await wallet.credit(amount, paymentMethod, 'Deposit');
+    // } catch (error) {
+    //   console.error('Error crediting wallet:', error);
+    //   throw error;
+
+    // }
+
+    // // Fetch top 10 latest deposit/withdrawal transactions
+
+    // const transactions = await Transaction.find({
+    //   userId: req.user.id,
+    //   type: { $in: ['credit', 'debit'] }
+    // })
+    //   .sort({ createdAt: -1 })
+    //   .limit(10);
+
+
+    // res.status(200).json({
+    //   success: true,
+    //   message: 'Funds deposited successfully',
+    //   wallet,
+    //   transactions
+    // });
+    // try {
+    //   await sendDepositConfirmationEmail(req.user.email, req.user.firstName, amount, paymentMethod);
+    // } catch (error) {
+    //   console.error('Error sending deposit confirmation email:', error);
+    // }
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -51,6 +72,44 @@ export const depositFunds = async (req, res) => {
     });
   }
 };
+
+export const verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature ,userId } = req.body;
+    console.log('Verifying payment with data:', req.body); // Debug log
+    const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest('hex');
+      console.log('Generated signature:', generated_signature);
+      console.log('Received signature:', razorpay_signature);
+    if (generated_signature === razorpay_signature) {
+      // Payment is successful, you can now credit the user's wallet
+      const wallet = await Wallet.findOne({ userId: userId });
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wallet not found'
+      });
+    }
+      res.status(200).json({
+        success: true,
+        message: 'Payment verified successfully'
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment signature'
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying payment',
+      error: error.message
+    });
+  }
+};
+
 export const getWalletBalance = async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ userId: req.user.id });
@@ -139,7 +198,7 @@ export const getTransactionHistory = async (req, res) => {
     const totalTransactions = await Transaction.countDocuments({
       userId: req.user.id
     });
-    
+
     const transactions = await Transaction.find({
       userId: req.user.id,
       type: { $in: ['credit', 'debit'] }
@@ -147,7 +206,7 @@ export const getTransactionHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     res.status(200).json({
       success: true,
       message: 'Transaction history retrieved successfully',

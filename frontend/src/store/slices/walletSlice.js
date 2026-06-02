@@ -39,7 +39,7 @@ export const depositFunds = createAsyncThunk(
         {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       } );
-      console.log('Deposit response:', response.data); 
+       
       return response.data;
     } catch (error) {
       console.log('Deposit error:', error); // Debug log
@@ -118,9 +118,9 @@ const walletSlice = createSlice({
       })
       .addCase(depositFunds.fulfilled, (state, action) => {
         state.isDepositing = false;
-        state.balance = action.payload.wallet.balance;
-        state.totalDeposited = action.payload.wallet.totalDeposited;
-        state.transactions = action.payload.transactions || state.transactions;
+        // state.balance = action.payload.wallet.balance;
+        // state.totalDeposited = action.payload.wallet.totalDeposited;
+        // state.transactions = action.payload.transactions || state.transactions;
         state.error = null;
       })
       .addCase(depositFunds.rejected, (state, action) => {

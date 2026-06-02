@@ -62,7 +62,7 @@ export const emailTemplates = {
       </div>
     </div>
   `,
-  emailVerificationSuccess: (kycUrl) =>  `
+  emailVerificationSuccess: (kycUrl) => `
     <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
       <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">Complete Your KYC</h1>
       <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">Your email has been verified successfully! To access all features, please complete your KYC by clicking the button below:</p>
@@ -104,33 +104,246 @@ export const emailTemplates = {
     </div>
   `,
   passwordChanged: (changePasswordUrl) => `
-    <div style="font-family: Raleway, Arial, sans-serif; background: #000; color: #fff; border-radius: 8px; padding: 32px; max-width: 480px; margin: 32px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #fff;">
-    Password Changed
-  </h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
-    Your password was changed successfully.
-  </p>
+  <!-- Font -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
 
-  <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 24px;">
-    If this wasn’t you, please secure your account immediately by changing your password using the link below.
-  </p>
+  <style>
+    body{
+      margin:0;
+      padding:24px 12px;
+      background:#f3f4f6;
+      font-family:'Darker Grotesque','Helvetica Neue',Arial,sans-serif;
+    }
 
-  <a href="${changePasswordUrl}" style="display: inline-block; padding: 12px 32px; background: #fff; color: #000; font-weight: bold; font-size: 1rem; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.10); margin-bottom: 24px;">
-    Change Password
-  </a>
+    table{
+      border-spacing:0;
+    }
 
-  <p style="font-size: 0.95rem; color: #d1d5db; margin-top: 16px;">
-    If you recognize this activity, no further action is required.
-  </p>
+    .container{
+      width:100%;
+      max-width:520px;
+      margin:auto;
+      background:#0b0b0b;
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow:0 10px 40px rgba(0,0,0,0.18);
+    }
 
-  <div style="margin-top:32px; text-align:center;">
-    <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">
-      CRIXCHANGE
-    </span>
-  </div>
-</div>
+    .hero{
+      background:linear-gradient(135deg,#111827,#000000);
+      padding:54px 30px;
+      text-align:center;
+    }
+
+    .logo{
+      font-size:38px;
+      font-weight:800;
+      color:#ffffff;
+      letter-spacing:-1px;
+      margin-bottom:24px;
+      line-height:1;
+    }
+
+    .title{
+      margin:0;
+      color:#ffffff;
+      font-size:40px;
+      line-height:42px;
+      font-weight:800;
+      letter-spacing:-1px;
+    }
+
+    .subtitle{
+      margin:18px auto 0;
+      max-width:360px;
+      color:#d1d5db;
+      font-size:20px;
+      line-height:30px;
+      font-weight:500;
+    }
+
+    .content{
+      padding:38px 30px;
+      background:#0b0b0b;
+    }
+
+    .text{
+      margin:0 0 28px;
+      color:#d1d5db;
+      font-size:19px;
+      line-height:30px;
+      font-weight:500;
+    }
+
+    .button-wrap{
+      text-align:center;
+      margin:38px 0;
+    }
+
+    .button{
+      display:inline-block;
+      padding:15px 38px;
+      background:#ffffff;
+      color:#000000 !important;
+      text-decoration:none;
+      border-radius:999px;
+      font-size:18px;
+      font-weight:800;
+    }
+
+    .small-text{
+      margin:0;
+      color:#9ca3af;
+      font-size:17px;
+      line-height:28px;
+    }
+
+    .footer{
+      border-top:1px solid rgba(255,255,255,0.08);
+      background:#050505;
+      padding:28px 20px;
+      text-align:center;
+    }
+
+    .footer-logo{
+      color:#ffffff;
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:-1px;
+      line-height:1;
+    }
+
+    .footer-text{
+      margin:10px 0 0;
+      color:#6b7280;
+      font-size:15px;
+      line-height:24px;
+    }
+
+    @media only screen and (max-width:600px){
+
+      .hero{
+        padding:46px 22px !important;
+      }
+
+      .content{
+        padding:32px 22px !important;
+      }
+
+      .logo{
+        font-size:34px !important;
+      }
+
+      .title{
+        font-size:34px !important;
+        line-height:38px !important;
+      }
+
+      .subtitle{
+        font-size:18px !important;
+        line-height:28px !important;
+      }
+
+      .text{
+        font-size:18px !important;
+        line-height:28px !important;
+      }
+
+      .button{
+        padding:14px 30px !important;
+        font-size:17px !important;
+      }
+
+      .footer-logo{
+        font-size:25px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <table width="100%">
+    <tr>
+      <td align="center">
+
+        <table class="container" width="520">
+
+          <!-- HERO -->
+          <tr>
+            <td class="hero">
+
+              <div class="logo">
+                Crixchange<span style="color:#ef4444;">.</span>
+              </div>
+
+              <h1 class="title">
+                Password Changed
+              </h1>
+
+              <p class="subtitle">
+                Your CRIXCHANGE password was updated successfully.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- CONTENT -->
+          <tr>
+            <td class="content">
+
+              <p class="text">
+                If this wasn’t you, secure your account immediately using the button below.
+              </p>
+
+              <div class="button-wrap">
+
+                <a href="${changePasswordUrl}" class="button">
+                  Secure Account
+                </a>
+
+              </div>
+
+              <p class="small-text">
+                If you recognize this activity, no further action is required.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td class="footer">
+
+              <div class="footer-logo">
+                Crixchange<span style="color:#ef4444;">.</span>
+              </div>
+
+              <p class="footer-text">
+                Smart sports trading platform for passionate fans.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
 
   `,
 

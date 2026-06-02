@@ -115,7 +115,6 @@ export const register = async (req, res) => {
   try {
     
     await sendWelcomeEmail(user.email,user.firstName);
-    console.log("Welcome email sent successfully");
     await sendVerificationEmail(user.email,user.firstName, verificationUrl);
   } catch (error) {
     console.error('Email sending failed:', error);
