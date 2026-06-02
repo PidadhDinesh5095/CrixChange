@@ -162,7 +162,7 @@ const WalletPage = () => {
           try {
 
             const verifyResponse = await axios.post(
-              'http://localhost:5000/api/wallet/verify-payment',
+              `${import.meta.env.VITE_API_URL}/wallet/verify-payment`,
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
