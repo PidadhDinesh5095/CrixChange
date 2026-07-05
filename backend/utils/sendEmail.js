@@ -453,7 +453,7 @@ export const emailTemplates = {
         </p>
         <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
           <h3 style="color: #10b981; margin: 0 0 10px 0;">₹${amount}</h3>
-          <p style="color: #6b7280; margin: 0;">Deposited via ${method}</p>
+         
         </div>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${process.env.FRONTEND_URL}/wallet" 
@@ -563,11 +563,11 @@ export const sendTradeConfirmationEmail = async (email, name, tradeDetails) => {
 };
 
 // Send deposit confirmation email
-export const sendDepositConfirmationEmail = async (email, name, amount, method) => {
+export const sendDepositConfirmationEmail = async (email, name, amount) => {
   await sendEmail({
     email,
     subject: 'Deposit Successful - CrixChange',
-    message: emailTemplates.depositConfirmation(name, amount, method)
+    message: emailTemplates.depositConfirmation(name, amount)
   });
 };
 

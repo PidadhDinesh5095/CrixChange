@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { depositFunds, getWalletBalance, withdrawFunds, getTransactionHistory } from '../store/slices/walletSlice';
+import { depositFunds, getWalletBalance, withdrawFunds, getTransactionHistory, verifyPayment } from '../store/slices/walletSlice';
 
 import {
   Wallet,
@@ -68,7 +68,7 @@ const WalletPage = () => {
 
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
+
 
 
 
@@ -139,13 +139,11 @@ const WalletPage = () => {
     try {
       const formData = {
         amount: parseFloat(depositAmount),
-        paymentMethod: selectedPaymentMethod
+
       };
-      console.log(`importing Razorpay with key: wvfiufh`); //debug log
+
       const result = await dispatch(depositFunds(formData));
       const data = result.payload.order;
-      console.log('Deposit result:', result); //debug log
-
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -161,19 +159,14 @@ const WalletPage = () => {
 
           try {
 
-            const verifyResponse = await axios.post(
-              `${import.meta.env.VITE_API_URL}/wallet/verify-payment`,
-              {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                userId: user.id
-              }
-            );
-
-            console.log(verifyResponse.data);
-
-            toast.success('Payment verified successfully');
+            const verifyResponse = await dispatch(verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              user: user,
+              amount: parseFloat(depositAmount)
+            }))
+            verifyPayment.fulfilled.match(verifyResponse) ? toast.success('Payment verified successfully') : toast.error('Payment verification failed');
 
           } catch (error) {
 
@@ -546,38 +539,7 @@ const WalletPage = () => {
                   </div>
 
                   {/* Payment Methods */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                      Payment Method
-                    </label>
-                    <div className="space-y-3">
-                      {paymentMethods.map((method) => {
-                        const Icon = method.icon;
-                        return (
-                          <div
-                            key={method.id}
-                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === method.id
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                              }`}
-                            onClick={() => setSelectedPaymentMethod(method.id)}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <Icon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {method.name}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {method.description}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+
 
                   {/* Deposit Button */}
                   <button
@@ -684,92 +646,119 @@ const WalletPage = () => {
                   Transaction History
                 </h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-[#fff]">
-                  <thead className="bg-gray-50 dark:bg-[#111]">
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                <table className="w-full border-separate border-spacing-y-2">
+                  <thead className="bg-gray-100 dark:bg-[#111]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-8 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         Date & Time
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+
+                      <th className="px-8 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Method
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+
+                      <th className="px-8 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         Amount
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+
+                      <th className="px-8 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+
+                      <th className="px-8 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         Reference
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white dark:bg-[#000] divide-y divide-gray-200 dark:divide-[#fff]">
+
+                  <tbody>
                     {walletData.transactions.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="text-center py-8 text-gray-500 dark:text-gray-300">No transactions found</td>
+                        <td
+                          colSpan={5}
+                          className="py-10 text-center text-gray-500 dark:text-gray-400"
+                        >
+                          No transactions found
+                        </td>
                       </tr>
                     ) : (
                       walletData.transactions.map((transaction) => (
-                        <tr key={transaction._id || transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <tr
+                          key={transaction._id || transaction.id}
+                          className="bg-white dark:bg-[#000] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition rounded-lg"
+                        >
+                          <td className="px-8 py-5 text-center text-sm text-gray-900 dark:text-white whitespace-nowrap">
                             {formatDateTime(transaction.createdAt || transaction.date)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {transaction.type === 'credit' ? (
-                                <ArrowDownLeft className="w-4 h-4 text-green-600 dark:text-green-400 mr-2" />
+
+                          <td className="px-8 py-5">
+                            <div className="flex items-center justify-center gap-2">
+                              {transaction.type === "credit" ? (
+                                <ArrowDownLeft className="h-4 w-4 text-green-500" />
                               ) : (
-                                <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400 mr-2" />
+                                <ArrowUpRight className="h-4 w-4 text-red-500" />
                               )}
-                              <span className="text-sm text-gray-900 dark:text-white capitalize">
+
+                              <span className="capitalize text-sm text-gray-900 dark:text-white">
                                 {transaction.type}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {transaction.paymentMethod}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm font-medium ${transaction.type === 'credit'
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-red-600 dark:text-red-400'
-                              }`}>
-                              {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+
+                          <td className="px-8 py-5 text-center">
+                            <span
+                              className={`font-semibold text-sm ${transaction.type === "credit"
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                                }`}
+                            >
+                              {transaction.type === "credit" ? "+" : "-"}
+                              {formatCurrency(transaction.amount)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(transaction.status)}
+
+                          <td className="px-8 py-5 text-center">
+                            <div className="flex justify-center">
+                              {getStatusBadge(transaction.status)}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+
+                          <td className="px-8 py-5 text-center text-sm text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap">
                             {transaction.reference}
                           </td>
                         </tr>
                       ))
                     )}
+
                     <tr ref={tableEndRef}></tr>
                   </tbody>
                 </table>
-                {/* Load More Button */}
-                <div className="flex justify-center py-4">
+
+                <div className="flex justify-center py-6">
                   <button
                     disabled={isgettingTransactions}
-
-                    className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors ${walletData.transactions.length >= totalTransactions && walletData.transactions.length != 10 ? 'cursor-not-allowed opacity-50' : ''}`}
-                    onClick={() => {
-                      dispatch(getTransactionHistory({ skip: walletData.transactions.length, limit: 10 }));
-                    }}
+                    className={`px-6 py-3 rounded-lg bg-blue-600 text-white font-medium transition hover:bg-blue-700 ${walletData.transactions.length >= totalTransactions &&
+                        walletData.transactions.length !== 10
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                      }`}
+                    onClick={() =>
+                      dispatch(
+                        getTransactionHistory({
+                          skip: walletData.transactions.length,
+                          limit: 10,
+                        })
+                      )
+                    }
                   >
                     {isgettingTransactions ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#000] mr-2"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                         Loading more transactions...
                       </div>
-                    ) : walletData.transactions.length >= totalTransactions && walletData.transactions.length != 10 ? (
+                    ) : walletData.transactions.length >= totalTransactions &&
+                      walletData.transactions.length !== 10 ? (
                       "No more transactions"
                     ) : (
                       "Load More Transactions"
@@ -778,6 +767,7 @@ const WalletPage = () => {
                 </div>
               </div>
             </div>
+
           )}
         </motion.div>
       </div>

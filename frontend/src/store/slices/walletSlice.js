@@ -65,11 +65,26 @@ export const getTransactionHistory = createAsyncThunk(
   'wallet/getTransactions',
   async (params, { rejectWithValue }) => {
     try {
-      console.log('Fetching transactions with params:', params); // Debug log
+      
       const response = await api.get('/wallet/transactions', { params });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch transactions');
+    }
+  }
+);
+export const verifyPayment = createAsyncThunk(
+  'wallet/verify-payment',
+  async (paymentData, { rejectWithValue }) => {
+    
+    try {
+      const response = await api.post('/wallet/verify-payment', paymentData);
+      console.log('Payment verification response:', response.data); // Debug log
+      return response.data;
+
+    } catch (error) {
+      console.error('Error verifying payment:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Payment verification failed');
     }
   }
 );
@@ -118,9 +133,7 @@ const walletSlice = createSlice({
       })
       .addCase(depositFunds.fulfilled, (state, action) => {
         state.isDepositing = false;
-        // state.balance = action.payload.wallet.balance;
-        // state.totalDeposited = action.payload.wallet.totalDeposited;
-        // state.transactions = action.payload.transactions || state.transactions;
+        
         state.error = null;
       })
       .addCase(depositFunds.rejected, (state, action) => {
@@ -159,6 +172,23 @@ const walletSlice = createSlice({
       })
       .addCase(getTransactionHistory.rejected, (state, action) => {
         state.isgettingTransactions = false;
+        state.error = action.payload;
+      })
+      .addCase(verifyPayment.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.balance = action.payload.wallet.balance;
+
+        state.frozenBalance = action.payload.wallet.frozenBalance;
+        state.totalDeposited = action.payload.wallet.totalDeposited;
+        state.transactions = action.payload.transactions || state.transactions;
+        state.error = null;
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.isLoading = false;
         state.error = action.payload;
       });
   },

@@ -13,7 +13,7 @@ import { sendDepositConfirmationEmail, sendWithdrawalConfirmationEmail } from '.
 export const depositFunds = async (req, res) => {
   try {
 
-    const { amount, paymentMethod } = req.body;
+    const { amount } = req.body;
 
     const wallet = await Wallet.findOne({ userId: req.user.id });
     if (!wallet) {
@@ -74,27 +74,47 @@ export const depositFunds = async (req, res) => {
 };
 
 export const verifyPayment = async (req, res) => {
+  console.log('Verifying payment with data:', req.body); // Debug log
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature ,userId } = req.body;
-    console.log('Verifying payment with data:', req.body); // Debug log
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user,amount } = req.body;
+
     const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest('hex');
-      console.log('Generated signature:', generated_signature);
-      console.log('Received signature:', razorpay_signature);
+   
     if (generated_signature === razorpay_signature) {
       // Payment is successful, you can now credit the user's wallet
-      const wallet = await Wallet.findOne({ userId: userId });
-    if (!wallet) {
-      return res.status(404).json({
-        success: false,
-        message: 'Wallet not found'
-      });
-    }
+      const wallet = await Wallet.findOne({ userId: user.id });
+      if (!wallet) {
+        return res.status(404).json({
+          success: false,
+          message: 'Wallet not found'
+        });
+      }
+      try {
+        await wallet.credit(amount, 'Deposit');
+      } catch (error) {
+        console.error('Error crediting wallet:', error);
+        throw error;
+
+      }
+      const transactions = await Transaction.find({
+        userId: user.id,
+        type: { $in: ['credit', 'debit'] }
+      })
+        .sort({ createdAt: -1 })
+        .limit(10);
       res.status(200).json({
         success: true,
-        message: 'Payment verified successfully'
+        message: 'Payment Verified and Funds deposited successfully',
+        wallet,
+        transactions
       });
+      try {
+      await sendDepositConfirmationEmail(user.email, user.firstName, amount);
+    } catch (error) {
+      console.error('Error sending deposit confirmation email:', error);
+    }
     } else {
       return res.status(400).json({
         success: false,

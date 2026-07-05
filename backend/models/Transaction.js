@@ -35,10 +35,7 @@ const transactionSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
-  paymentMethod: {
-    type: String,
-    default: ''
-  }
+  
 }, {
   timestamps: true
 });

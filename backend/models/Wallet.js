@@ -98,13 +98,13 @@ walletSchema.methods.debit = async function(amount, description = '') {
     amount,
     description,
     status: 'completed',
-    paymentMethod: 'Bank Transfer', // Assuming bank transfer for withdrawals, can be modified as needed
+   
     balanceAfter: this.balance
   });
 };
 
 // Method to credit balance
-walletSchema.methods.credit = async function(amount, paymentMethod, description = '') {
+walletSchema.methods.credit = async function(amount, description = '') {
   this.balance += amount;
 
   this.totalDeposited += amount;
@@ -118,7 +118,7 @@ walletSchema.methods.credit = async function(amount, paymentMethod, description 
     amount,
     description,
     status: 'completed',
-    paymentMethod,
+    
     balanceAfter: this.balance
   });
 };

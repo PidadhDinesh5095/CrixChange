@@ -313,26 +313,18 @@ const HomePage = () => {
         }
       }
 
-      // Cache miss / expired / forced → call the API via Redux
+      
       try {
 
-        const result = await dispatch(getMatches());
+        //const result = await dispatch(getMatches());
 
         if (getMatches.fulfilled.match(result)) {
 
           const matchesData = result.payload?.matches || [];
 
-
-          // Only re-render and write to storage if something actually changed.
-          // On a forced refresh (SSE eviction) we always update.
-
-
           setLiveMatches(transformMatches(matchesData));
           localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
           localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-
-
-
 
         }
 
@@ -429,7 +421,7 @@ const HomePage = () => {
           className="w-full flex flex-row items-end justify-start mx-auto h-screen px-4 bg-top bg-cover sm:px-6 lg:px-8 pb-28"
           style={{
             backgroundImage: `url(${currentMatch?.image ||
-              'https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i'
+              'https://currentaffairs.adda247.com/wp-content/uploads/multisite/sites/5/2025/06/27134043/IPL-Winners-List-from-2008-to-2026-New-Winner-and-Runner-up-Team.webp'
               })`,
           }}
         >
