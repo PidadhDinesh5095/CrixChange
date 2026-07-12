@@ -6,20 +6,20 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  teamId: {
+  stockId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team',
+    ref: 'Stock',
     required: true
   },
-  type: {
+  side: {
     type: String,
-    enum: ['buy', 'sell'],
+    enum: ['BUY', 'SELL'],
     required: true
   },
   orderType: {
     type: String,
-    enum: ['market', 'limit', 'stop'],
-    default: 'market'
+    enum: ['MARKET', 'LIMIT'],
+    default: 'MARKET'
   },
   quantity: {
     type: Number,
@@ -31,18 +31,7 @@ const orderSchema = new mongoose.Schema({
     required: true,
     min: [0, 'Price cannot be negative']
   },
-  limitPrice: {
-    type: Number,
-    sparse: true
-  },
-  stopPrice: {
-    type: Number,
-    sparse: true
-  },
-  totalAmount: {
-    type: Number,
-    required: true
-  },
+  
   filledQuantity: {
     type: Number,
     default: 0
@@ -57,17 +46,14 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'partial', 'completed', 'cancelled', 'rejected'],
-    default: 'pending'
+    enum: ['OPEN', 'PARTIALLY_FILLED', 'CLOSED', 'CANCELLED', 'REJECTED'],
+    default: 'OPEN'
   },
   rejectionReason: {
     type: String,
     maxlength: [500, 'Rejection reason cannot exceed 500 characters']
   },
-  expiresAt: {
-    type: Date,
-    default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-  },
+ 
   metadata: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
@@ -78,7 +64,7 @@ const orderSchema = new mongoose.Schema({
 
 // Indexes
 orderSchema.index({ userId: 1, createdAt: -1 });
-orderSchema.index({ teamId: 1, type: 1, status: 1 });
+orderSchema.index({ stockId: 1, type: 1, status: 1 });
 orderSchema.index({ status: 1, expiresAt: 1 });
 orderSchema.index({ type: 1, orderType: 1, price: 1 });
 
@@ -112,10 +98,10 @@ orderSchema.methods.partialFill = async function(quantity, price) {
   await this.save();
   
   // Create fill record
-  await mongoose.model('OrderFill').create({
+  await mongoose.model('Fill').create({
     orderId: this._id,
     userId: this.userId,
-    teamId: this.teamId,
+    stockId: this.stockId,
     quantity,
     price,
     amount: fillAmount
@@ -134,9 +120,9 @@ orderSchema.methods.cancel = async function(reason = 'User cancelled') {
 };
 
 // Static method to get order book
-orderSchema.statics.getOrderBook = async function(teamId, limit = 10) {
+orderSchema.statics.getOrderBook = async function(stockId, limit = 10) {
   const buyOrders = await this.find({
-    teamId,
+    stockId,
     type: 'buy',
     status: { $in: ['pending', 'partial'] }
   })
@@ -145,7 +131,7 @@ orderSchema.statics.getOrderBook = async function(teamId, limit = 10) {
   .populate('userId', 'firstName lastName');
   
   const sellOrders = await this.find({
-    teamId,
+    stockId,
     type: 'sell',
     status: { $in: ['pending', 'partial'] }
   })
@@ -157,15 +143,15 @@ orderSchema.statics.getOrderBook = async function(teamId, limit = 10) {
 };
 
 // Static method to match orders
-orderSchema.statics.matchOrders = async function(teamId) {
+orderSchema.statics.matchOrders = async function(stockId) {
   const buyOrders = await this.find({
-    teamId,
+    stockId,
     type: 'buy',
     status: { $in: ['pending', 'partial'] }
   }).sort({ price: -1, createdAt: 1 });
   
   const sellOrders = await this.find({
-    teamId,
+    stockId,
     type: 'sell',
     status: { $in: ['pending', 'partial'] }
   }).sort({ price: 1, createdAt: 1 });

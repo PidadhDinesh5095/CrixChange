@@ -16,6 +16,11 @@ const portfolioSchema = new mongoose.Schema({
     required: true,
     min: [0, 'Quantity cannot be negative']
   },
+  lockedQuantity: {
+    type: Number,
+    default: 0,
+    min: [0, 'Locked quantity cannot be negative']
+  },
   averageBuyPrice: {
     type: Number,
     required: true,
@@ -52,6 +57,11 @@ const portfolioSchema = new mongoose.Schema({
 portfolioSchema.index({ userId: 1, teamId: 1 }, { unique: true });
 portfolioSchema.index({ userId: 1 });
 
+// Virtual for available quantity
+portfolioSchema.virtual('availableQuantity').get(function() {
+  return this.quantity - this.lockedQuantity;
+});
+
 // Virtual for total PnL
 portfolioSchema.virtual('totalPnL').get(function() {
   return this.realizedPnL + this.unrealizedPnL;
@@ -71,13 +81,29 @@ portfolioSchema.methods.updateCurrentValue = async function(currentPrice) {
   await this.save();
 };
 
+portfolioSchema.methods.lockQuantity = async function(quantity) {
+  if (quantity > this.availableQuantity) {
+    throw new Error('Insufficient available shares to lock');
+  }
+  this.lockedQuantity += quantity;
+  await this.save();
+};
+
+portfolioSchema.methods.unlockQuantity = async function(quantity) {
+  if (quantity > this.lockedQuantity) {
+    throw new Error('Insufficient locked shares to unlock');
+  }
+  this.lockedQuantity -= quantity;
+  await this.save();
+};
+
 // Method to add shares (buy)
 portfolioSchema.methods.addShares = async function(quantity, price) {
   const newInvestment = quantity * price;
   const newTotalQuantity = this.quantity + quantity;
   
   // Calculate new average buy price
-  this.averageBuyPrice = (this.totalInvested + newInvestment) / newTotalQuantity;
+  this.averageBuyPrice = this.quantity === 0 ? price : (this.totalInvested + newInvestment) / newTotalQuantity;
   this.quantity = newTotalQuantity;
   this.totalInvested += newInvestment;
   

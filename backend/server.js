@@ -21,6 +21,8 @@ import kycRoutes from './routes/kycRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import currentMatchRoutes from './routes/currentMatchRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import { initTrading } from './controllers/tradingController.js';
+import tradingRoutes from './routes/tradingRoutes.js';
 {/**import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import tradingRoutes from './routes/tradingRoutes.js';
@@ -48,7 +50,9 @@ const io = new Server(server, {
 connectDB();
 await connectRedis();
 
- connectMailServer();
+connectMailServer();
+// Initialize trading engine (seeds stocks and hydrates orderbooks)
+await initTrading();
 // Security middleware
 app.use(helmet());
 app.use(compression());
@@ -88,6 +92,7 @@ app.use('/api/kyc', kycRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/currentMatches', currentMatchRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/trading', tradingRoutes);
 // Remove this dummy GET route, it's not needed for registration
 // app.get('/register',(req,res)=>{res.send("Hello")});
 {/**
