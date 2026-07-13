@@ -1,13 +1,13 @@
-import React, { useState ,useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  Menu, 
-  X, 
-  User, 
-  Settings, 
-  LogOut, 
-  Sun, 
+import {
+  Menu,
+  X,
+  User,
+  Settings,
+  LogOut,
+  Sun,
   Moon,
   TrendingUp,
   Wallet,
@@ -36,7 +36,7 @@ const Header = () => {
   const token = localStorage.getItem('token');
 
   const handleLogout = () => {
-   
+
     dispatch(logout(token));
     navigate('/login');
     setIsProfileMenuOpen(false);
@@ -53,29 +53,29 @@ const Header = () => {
     { to: '/portfolio', label: 'PORTFOLIO', icon: User },
     { to: '/analytics', label: 'ANALYTICS', icon: BarChart3 },
     { to: '/leaderboard', label: 'LEADERBOARD', icon: Trophy },
-    
+
   ];
 
   const isActiveLink = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
-   useEffect(() => {
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-   const navBg = scrolled || !isHome
-    ? "bg-card/95 backdrop-blur-xl shadow-lg border-b border-border/50"
+  const navBg = scrolled || !isHome
+    ? "bg-card/95 backdrop-blur-xl shadow-lg border-b border-gray-200 dark:border-gray-800"
     : "bg-transparent";
-    const textColor = scrolled || !isHome || isLoading ? "text-black dark:text-white" : "text-white dark:text-white";
+  const textColor = scrolled || !isHome || isLoading ? "text-black dark:text-white" : "text-white dark:text-white";
 
   return (
-    <header className={` fixed top-0 left-0 w-full z-50 ${navBg} shadow-lg border-black dark:border-white `}>
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-row items-center h-16 justify-between gap-4">
+    <header className={` fixed top-0 left-0 w-full  z-50  ${navBg} shadow-lg `}>
+      <div className="max-w-8xl h-11 px-2 sm:px-6 lg:px-2">
+        <div className="flex h-full items-center justify-between">
           {/* Logo */}
-          <Link to="/" className={`flex items-center space-x-3 mb-3 text-[2.6rem] font-bold flex-shrink-0 ${textColor}`}>
-           <h1 >Crixchange<span  className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
+          <Link to="/" className={`flex items-center space-x-3 mb-3 ml-6 text-[1.9rem] font-bold flex-shrink-0 ${textColor}`}>
+            <h1 >Crixchange<span className='text-red-500 ml-[0.5] font-bold'>.</span></h1>
           </Link>
 
           {/* Desktop Navigation */}
@@ -86,11 +86,10 @@ const Header = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors duration-200 ${
-                    isActiveLink(link.to)
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors duration-200 ${isActiveLink(link.to)
                       ? `${textColor} bg-white dark:bg-black`
                       : `${textColor} hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900`
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{link.label}</span>
@@ -113,7 +112,7 @@ const Header = () => {
           {/* Right Side (Desktop only) */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {/* Live Market Indicator */}
-            
+
 
             {/* Theme Toggle */}
             <button
@@ -121,25 +120,21 @@ const Header = () => {
               className={`p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors`}
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-3 h-3" />}
             </button>
 
             {isAuthenticated ? (
               <>
-                {/* Notifications */}
-                <button className={`p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative`}>
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+
 
                 {/* Profile Menu */}
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className={`flex items-center space-x-2 p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors `}
+                    className={`flex items-center h-8 space-x-2 p-2 ${textColor} hover:text-gray-600 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors `}
                   >
-                    <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center ">
-                      <span className="text-white dark:text-black text-md font-black">
+                    <div className="w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center ">
+                      <span className="text-white dark:text-black text-xs font-black">
                         {user?.firstName?.charAt(0).toUpperCase()}{user?.lastName?.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -210,13 +205,13 @@ const Header = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                  className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
                 >
                   LOGIN
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-6 py-2 rounded-lg text-sm font-bold transition-colors"
+                  className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-6 py-2 rounded-lg text-xs font-bold transition-colors"
                 >
                   REGISTER
                 </Link>
@@ -241,11 +236,10 @@ const Header = () => {
                     <Link
                       key={link.to}
                       to={link.to}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-bold transition-colors ${
-                        isActiveLink(link.to)
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-bold transition-colors ${isActiveLink(link.to)
                           ? 'text-white dark:text-black bg-black dark:bg-white'
                           : 'text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900'
-                      }`}
+                        }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <Icon className="w-5 h-5" />
@@ -288,14 +282,14 @@ const Header = () => {
                     <>
                       <Link
                         to="/login"
-                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         LOGIN
                       </Link>
                       <Link
                         to="/register"
-                        className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-6 py-2 rounded-lg text-sm font-bold transition-colors"
+                        className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-6 py-2 rounded-lg text-xs font-bold transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         REGISTER
