@@ -315,19 +315,15 @@ const HomePage = () => {
 
       
       try {
-
-        //const result = await dispatch(getMatches());
+        const result = await dispatch(getMatches());
 
         if (getMatches.fulfilled.match(result)) {
-
           const matchesData = result.payload?.matches || [];
 
           setLiveMatches(transformMatches(matchesData));
           localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
           localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-
         }
-
       } catch (err) {
         console.error('Error fetching matches:', err);
       }

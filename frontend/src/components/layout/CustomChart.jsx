@@ -7,6 +7,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { createChart, CrosshairMode } from "lightweight-charts";
 import {
   Search,
   Star,
@@ -18,6 +19,9 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import { useSelector,useDispatch } from "react-redux";
+import {placeOrder} from "../../store/slices/tradingSlice";
+import { use } from "react";
 
 /* =========================================================================
    IPL TEAMS (10 only) — colored initials, no external logo dependency
@@ -131,9 +135,9 @@ function generateSeries(startPrice, numBalls, seed) {
    AGGREGATION + INDICATOR MATH
    ========================================================================= */
 function aggregate(ballData, interval) {
-  if (interval === "1b") return ballData;
+  if (interval === "1s" || interval === "1m") return ballData;
   const groupSize =
-    interval === "1o" ? 6 : interval === "2o" ? 12 : interval === "5o" ? 30 : interval === "10o" ? 60 : ballData.length || 1;
+    interval === "15m" ? 15 : interval === "1h" ? 60 : ballData.length || 1;
   const out = [];
   for (let i = 0; i < ballData.length; i += groupSize) {
     const chunk = ballData.slice(i, i + groupSize);
@@ -278,7 +282,7 @@ const INDICATOR_OPTIONS = [
   { key: "volume", label: "Volume" },
 ];
 
-const INTERVALS = [["1b", "1B"], ["1o", "1O"], ["2o", "2O"], ["5o", "5O"], ["10o", "10O"], ["full", "Full"]];
+const INTERVALS = [["1s", "1S"], ["1m", "1M"], ["15m", "15M"], ["1h", "1H"], ["full", "Full"]];
 
 function ToolbarDropdown({ label, isOpen, onToggle, onClose, children, widthClass = "w-44" }) {
   return (
@@ -339,7 +343,7 @@ function TerminalHeader({ team, current, change, changePct, dayHigh, dayLow, day
       <StatBlock label="High" value={dayHigh.toFixed(2)} />
       <StatBlock label="Low" value={dayLow.toFixed(2)} />
       <StatBlock label="Volume" value={dayVol.toFixed(0)} />
-      
+
     </div>
   );
 }
@@ -359,11 +363,10 @@ function ChartToolbar({ interval_, setInterval_, chartType, setChartType, indica
           <button
             key={v}
             onClick={() => setInterval_(v)}
-            className={`px-2.5 py-1 text-xs font-medium rounded-sm  transition-colors ${
-              interval_ === v
+            className={`px-2.5 py-1 text-xs font-medium rounded-sm  transition-colors ${interval_ === v
                 ? "bg-black text-white dark:bg-white dark:text-black "
                 : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
-            }`}
+              }`}
           >
             {label}
           </button>
@@ -427,95 +430,12 @@ function ChartToolbar({ interval_, setInterval_, chartType, setChartType, indica
 const W = 1000, PAD_L = 10, PAD_R = 56;
 
 const TerminalChart = forwardRef(function TerminalChart(
-  { data, chartType, indicators, isDark, resetSignal, upColor, downColor },
+  { data, chartType, indicators, isDark, resetSignal, upColor, downColor, interval },
   ref
 ) {
-  const svgRef = useRef(null);
-  const followLive = useRef(true);
-  const dragState = useRef({ dragging: false, startX: 0, startViewStart: 0 });
-
-  const [viewLen, setViewLen] = useState(() => Math.min(50, Math.max(1, data.length)));
-  const [viewStart, setViewStart] = useState(() => Math.max(0, data.length - Math.min(50, Math.max(1, data.length))));
-  const [hoverI, setHoverI] = useState(null);
-
-  useEffect(() => {
-    const initLen = Math.min(50, Math.max(1, data.length));
-    setViewLen(initLen);
-    setViewStart(Math.max(0, data.length - initLen));
-    followLive.current = true;
-    setHoverI(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetSignal]);
-
-  useEffect(() => {
-    setViewStart((vs) => {
-      if (followLive.current) return Math.max(0, data.length - viewLen);
-      return Math.max(0, Math.min(Math.max(0, data.length - viewLen), vs));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.length]);
-
-  const zoomBy = useCallback((factor, anchorFrac) => {
-    setViewLen((prevLen) => {
-      const newLen = Math.max(5, Math.min(data.length || 1, Math.round(prevLen * factor)));
-      setViewStart((prevStart) => {
-        const anchorIdx = prevStart + prevLen * anchorFrac;
-        let newStart = Math.round(anchorIdx - newLen * anchorFrac);
-        newStart = Math.max(0, Math.min(Math.max(0, data.length - newLen), newStart));
-        followLive.current = newStart + newLen >= data.length - 1;
-        return newStart;
-      });
-      return newLen;
-    });
-  }, [data.length]);
-
-  const resetView = useCallback(() => {
-    const initLen = Math.min(50, Math.max(1, data.length));
-    setViewLen(initLen);
-    setViewStart(Math.max(0, data.length - initLen));
-    followLive.current = true;
-  }, [data.length]);
-
-  useImperativeHandle(ref, () => ({
-    zoomIn: () => zoomBy(0.8, 0.5),
-    zoomOut: () => zoomBy(1.25, 0.5),
-    reset: resetView,
-  }), [zoomBy, resetView]);
-
-  const handleWheel = (e) => {
-    if (!svgRef.current) return;
-    try { e.preventDefault(); } catch (err) { /* passive listener, ignore */ }
-    const rect = svgRef.current.getBoundingClientRect();
-    const frac = rect.width ? Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) : 0.5;
-    zoomBy(e.deltaY > 0 ? 1.15 : 1 / 1.15, frac);
-  };
-
-  const handleMouseDown = (e) => {
-    dragState.current = { dragging: true, startX: e.clientX, startViewStart: viewStart };
-  };
-  const endDrag = () => { dragState.current.dragging = false; };
-
-  const handleMouseMove = (e) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const scaleX = rect.width ? W / rect.width : 1;
-    const px = (e.clientX - rect.left) * scaleX;
-    const chartW = W - PAD_L - PAD_R;
-    const nVis = Math.max(1, Math.min(viewLen, data.length - viewStart));
-    const step = nVis > 1 ? chartW / (nVis - 1) : 0;
-    let idx = step ? Math.round((px - PAD_L) / step) : 0;
-    idx = Math.max(0, Math.min(nVis - 1, idx));
-    setHoverI(idx);
-
-    if (dragState.current.dragging) {
-      const deltaPx = (e.clientX - dragState.current.startX) * scaleX;
-      const deltaCandles = step ? Math.round(-deltaPx / step) : 0;
-      let newStart = dragState.current.startViewStart + deltaCandles;
-      newStart = Math.max(0, Math.min(Math.max(0, data.length - viewLen), newStart));
-      followLive.current = newStart + viewLen >= data.length - 1;
-      setViewStart(newStart);
-    }
-  };
+  const chartContainerRef = useRef(null);
+  const chartRef = useRef(null);
+  const [hoverData, setHoverData] = useState(null);
 
   const indicatorSeries = useMemo(() => {
     const out = {};
@@ -528,235 +448,254 @@ const TerminalChart = forwardRef(function TerminalChart(
     return out;
   }, [data, indicators]);
 
-  const visible = data.slice(viewStart, viewStart + viewLen);
-  const n = visible.length;
+  useEffect(() => {
+    const container = chartContainerRef.current;
+    if (!container || !data.length) {
+      setHoverData(null);
+      return;
+    }
 
-  const subSpecs = [];
-  if (indicators.volume) subSpecs.push({ key: "volume", h: 56, label: "Volume" });
-  if (indicators.rsi) subSpecs.push({ key: "rsi", h: 56, label: "RSI (14)" });
-  if (indicators.macd) subSpecs.push({ key: "macd", h: 72, label: "MACD (12, 26, 9)" });
+    container.innerHTML = "";
+    const chart = createChart(container, {
+      width: container.clientWidth || 715,
+      height: 378,
+      layout: {
+        background: { color: isDark ? "#000000" : "#ffffff" },
+        textColor: isDark ? "#f5f5f5" : "#111827",
+        fontFamily: "Darker Grotesque",
+      },
+      grid: {
+        vertLines: { color: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" },
+        horzLines: { color: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: isDark ? "#94a3b8" : "#64748b", width: 1, style: 2 },
+        horzLine: { color: isDark ? "#94a3b8" : "#64748b", width: 1, style: 2 },
+      },
+      rightPriceScale: {
+        borderColor: isDark ? "#374151" : "#d1d5db",
+        scaleMargins: { top: 0.08, bottom: indicators.volume ? 0.24 : 0.1 },
+      },
+      timeScale: {
+        borderColor: isDark ? "#374151" : "#d1d5db",
+        rightOffset: 4,
+        barSpacing: 2,
+        minBarSpacing: 4,
+        tickMarkFormatter: (time) => {
+          const value = Number(time);
+          if (!Number.isFinite(value)) return "";
+          if (interval === "1s") return `${value}s`;
+          if (interval === "1m") return `${value}m`;
+          if (interval === "15m") return `${value}m`;
+          if (interval === "1h") return `${value}h`;
+          return `${value}`;
+        },
+      },
+    });
 
-  const mainTop = 10, mainH = 290, GAP = 14, TIME_H = 22;
-  const mainBottom = mainTop + mainH;
-  let cursor = mainBottom + GAP;
-  const panes = subSpecs.map((s) => { const top = cursor, bottom = top + s.h; cursor = bottom + GAP; return { ...s, top, bottom }; });
-  const totalH = (panes.length ? panes[panes.length - 1].bottom : mainBottom) + TIME_H;
+    chartRef.current = chart;
 
-  const GRID = isDark ? "#27272a" : "#9CA3AF";
-  const AXIS = isDark ? "#9ca3af" : "#71717a";
-  const NEUTRAL_LINE = isDark ? "#e5e7eb" : "#111827";
-  const SMA_C = "#F0B90B", EMA_C = "#3B82F6", VWAP_C = "#A855F7", BOLL_C = "#14B8A6", MACD_C = "#3B82F6", SIGNAL_C = "#F0B90B", RSI_C = "#A855F7";
+    const mainData = data.map((d, index) => ({
+      time: Number(d.time) || index + 1,
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+    }));
 
-  if (!n) {
+    const seriesOptions = {
+      upColor: upColor,
+      downColor: downColor,
+      borderUpColor: upColor,
+      borderDownColor: downColor,
+      wickUpColor: upColor,
+      wickDownColor: downColor,
+    };
+
+    let mainSeries;
+    if (chartType === "candlestick") {
+      mainSeries = chart.addCandlestickSeries(seriesOptions);
+      mainSeries.setData(mainData);
+    } else if (chartType === "bar") {
+      mainSeries = chart.addBarSeries({ upColor: upColor, downColor: downColor });
+      mainSeries.setData(mainData);
+    } else if (chartType === "area") {
+      mainSeries = chart.addAreaSeries({
+        lineColor: upColor,
+        topColor: `${upColor}33`,
+        bottomColor: `${downColor}11`,
+      });
+      mainSeries.setData(mainData.map((d) => ({ time: d.time, value: d.close })));
+    } else if (chartType === "baseline") {
+      mainSeries = chart.addBaselineSeries({
+        baseValue: { type: "price", price: mainData[0]?.close ?? 0 },
+        topLineColor: upColor,
+        topFillColor1: `${upColor}33`,
+        topFillColor2: `${upColor}11`,
+        bottomLineColor: downColor,
+        bottomFillColor1: `${downColor}11`,
+        bottomFillColor2: `${downColor}33`,
+      });
+      mainSeries.setData(mainData.map((d) => ({ time: d.time, value: d.close })));
+    } else {
+      mainSeries = chart.addLineSeries({ color: upColor, lineWidth: 2 });
+      mainSeries.setData(mainData.map((d) => ({ time: d.time, value: d.close })));
+    }
+
+    if (indicators.volume) {
+      const volumeSeries = chart.addHistogramSeries({
+        color: upColor,
+        priceFormat: { type: "volume" },
+        priceScaleId: "volume",
+      });
+      volumeSeries.setData(data.map((d, index) => ({
+        time: Number(d.time) || index + 1,
+        value: d.volume,
+        color: d.close >= d.open ? `${upColor}66` : `${downColor}66`,
+      })));
+      chart.priceScale("volume").applyOptions({
+        scaleMargins: { top: 0.82, bottom: 0.02 },
+      });
+    }
+
+    const addOverlaySeries = (color, values) => {
+      if (!Array.isArray(values)) return;
+      const numericPoints = values.reduce((acc, value, index) => {
+        const numericValue = Number(value);
+        const numericTime = Number(data[index]?.time) || index + 1;
+        if (value == null || Number.isNaN(numericValue) || !Number.isFinite(numericTime)) return acc;
+        acc.push({ time: numericTime, value: numericValue });
+        return acc;
+      }, []);
+
+      if (!numericPoints.length) return;
+      const series = chart.addLineSeries({ color, lineWidth: 1.5 });
+      series.setData(numericPoints);
+    };
+
+    if (indicators.sma) {
+      addOverlaySeries("#f59e0b", indicatorSeries.sma);
+    }
+    if (indicators.ema) {
+      addOverlaySeries("#3b82f6", indicatorSeries.ema);
+    }
+    if (indicators.vwap) {
+      addOverlaySeries("#a855f7", indicatorSeries.vwap);
+    }
+    if (indicators.bollinger) {
+      addOverlaySeries("#14b8a6", indicatorSeries.bollinger.upper);
+      addOverlaySeries("#14b8a6", indicatorSeries.bollinger.mid);
+      addOverlaySeries("#14b8a6", indicatorSeries.bollinger.lower);
+    }
+
+    chart.timeScale().fitContent();
+
+    const handleCrosshairMove = (param) => {
+      if (!param.time || !param.seriesData.get(mainSeries)) {
+        setHoverData(null);
+        return;
+      }
+      const point = param.seriesData.get(mainSeries);
+      if (point) {
+        setHoverData(point);
+      }
+    };
+
+    chart.subscribeCrosshairMove(handleCrosshairMove);
+
+    const handleResize = () => {
+      chart.applyOptions({
+        width: container.clientWidth || 720,
+        height: 420,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.unsubscribeCrosshairMove(handleCrosshairMove);
+      chart.remove();
+    };
+  }, [data, chartType, indicators, isDark, resetSignal, upColor, downColor, interval]);
+
+  const zoomBy = useCallback((factor) => {
+    const chartInstance = chartRef.current;
+    if (!chartInstance) return;
+    const timeScale = chartInstance.timeScale();
+    const range = timeScale.getVisibleLogicalRange();
+    if (!range) return;
+    const center = (range.from + range.to) / 2;
+    const span = Math.max(6, (range.to - range.from) * factor);
+    const newFrom = Math.max(0, center - span / 2);
+    const newTo = Math.min(data.length - 1, center + span / 2);
+    timeScale.setVisibleLogicalRange({ from: newFrom, to: newTo });
+  }, [data.length]);
+
+  const resetView = useCallback(() => {
+    chartRef.current?.timeScale().fitContent();
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => zoomBy(0.8),
+    zoomOut: () => zoomBy(1.25),
+    reset: resetView,
+  }), [zoomBy, resetView]);
+
+  const latestPoint = hoverData || data[data.length - 1] || { open: 0, high: 0, low: 0, close: 0 };
+  const normalizedPoint = {
+    open: latestPoint.open ?? latestPoint.value ?? 0,
+    high: latestPoint.high ?? latestPoint.value ?? latestPoint.close ?? 0,
+    low: latestPoint.low ?? latestPoint.value ?? latestPoint.close ?? 0,
+    close: latestPoint.close ?? latestPoint.value ?? latestPoint.open ?? 0,
+  };
+  const hoverUp = normalizedPoint.close >= normalizedPoint.open;
+  const chgAbs = normalizedPoint.close - normalizedPoint.open;
+  const chgPct = normalizedPoint.open ? (chgAbs / normalizedPoint.open) * 100 : 0;
+  const rangePct = normalizedPoint.open ? ((normalizedPoint.high - normalizedPoint.low) / normalizedPoint.open) * 100 : 0;
+  const rsiValue = indicators.rsi && indicatorSeries.rsi?.[data.length - 1] != null ? indicatorSeries.rsi[data.length - 1].toFixed(2) : "—";
+  const macdValue = indicators.macd && indicatorSeries.macd?.histogram?.[data.length - 1] != null ? indicatorSeries.macd.histogram[data.length - 1].toFixed(2) : "—";
+
+  if (!data.length) {
     return <div className="h-72 flex items-center justify-center text-gray-400 text-sm border border-gray-200 dark:border-gray-800 rounded-sm">Waiting for data…</div>;
   }
 
-  const chartW = W - PAD_L - PAD_R;
-  const step = n > 1 ? chartW / (n - 1) : 0;
-  const x = (i) => PAD_L + i * step;
-  const candleW = Math.max(1.5, Math.min(step * 0.62, 16));
-
-  const sliceInd = (arr) => (arr ? arr.slice(viewStart, viewStart + viewLen) : null);
-  const smaVis = indicators.sma ? sliceInd(indicatorSeries.sma) : null;
-  const emaVis = indicators.ema ? sliceInd(indicatorSeries.ema) : null;
-  const vwapVis = indicators.vwap ? sliceInd(indicatorSeries.vwap) : null;
-  const bollVis = indicators.bollinger ? {
-    upper: sliceInd(indicatorSeries.bollinger.upper),
-    mid: sliceInd(indicatorSeries.bollinger.mid),
-    lower: sliceInd(indicatorSeries.bollinger.lower),
-  } : null;
-
-  const lows = visible.map((d) => d.low), highs = visible.map((d) => d.high);
-  const extra = [];
-  if (smaVis) extra.push(...smaVis.filter((v) => v != null));
-  if (emaVis) extra.push(...emaVis.filter((v) => v != null));
-  if (vwapVis) extra.push(...vwapVis.filter((v) => v != null));
-  if (bollVis) { extra.push(...bollVis.upper.filter((v) => v != null)); extra.push(...bollVis.lower.filter((v) => v != null)); }
-
-  let minP = Math.min(...lows, ...(extra.length ? extra : [Math.min(...lows)]));
-  let maxP = Math.max(...highs, ...(extra.length ? extra : [Math.max(...highs)]));
-  const pricePad = (maxP - minP) * 0.1 || 1;
-  minP -= pricePad; maxP += pricePad;
-  const yMain = (p) => mainTop + mainH - ((p - minP) / ((maxP - minP) || 1)) * (mainH - 16) - 8;
-
-  const linePath = visible.map((d, i) => `${i === 0 ? "M" : "L"}${x(i)},${yMain(d.close)}`).join(" ");
-  const trendColor = visible[n - 1].close >= visible[0].open ? upColor : downColor;
-  const areaPath = `${linePath} L${x(n - 1)},${mainBottom - 8} L${x(0)},${mainBottom - 8} Z`;
-  const baseline = visible[0].open;
-  const baselineY = yMain(baseline);
-  const baselineAreaPath = `${linePath} L${x(n - 1)},${baselineY} L${x(0)},${baselineY} Z`;
-
-  const toPath = (arr, yfn) => arr.map((v, i) => (v == null ? null : `${i === 0 || arr[i - 1] == null ? "M" : "L"}${x(i)},${yfn(v)}`)).filter(Boolean).join(" ");
-
-  const priceTicks = Array.from({ length: 6 }, (_, i) => minP + (maxP - minP) * i / 5);
-  const timeTickIdx = Array.from({ length: Math.min(6, n) }, (_, i) => Math.round(i * (n - 1) / Math.max(1, Math.min(6, n) - 1)));
-
-  const safeHoverIdx = hoverI != null ? Math.min(Math.max(hoverI, 0), Math.max(0, n - 1)) : Math.max(0, n - 1);
-  const hoverD = visible[safeHoverIdx] ?? visible[n - 1];
-  const hoverUp = hoverD ? hoverD.close >= hoverD.open : false;
-  const chgAbs = hoverD ? hoverD.close - hoverD.open : 0;
-  const chgPct = hoverD && hoverD.open ? (chgAbs / hoverD.open) * 100 : 0;
-  const rangePct = hoverD && hoverD.open ? ((hoverD.high - hoverD.low) / hoverD.open) * 100 : 0;
-  const readIdx = safeHoverIdx;
-
   return (
-    <div className="relative " onMouseUp={endDrag} onMouseLeave={endDrag}>
-      <div className="flex flex-wrap  items-center gap-x-4 gap-y-1 text-[11px] font-sans px-1">
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>O <b>{hoverD.open.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>H <b>{hoverD.high.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>L <b>{hoverD.low.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>C <b>{hoverD.close.toFixed(2)}</b></span>
+    <div className="flex flex-col gap-2 ">
+      <div className="flex flex-wrap h-3 items-center  gap-x-4 gap-y-1 text-[11px] font-sans px-1">
+        <span className={hoverUp ? "text-green-600" : "text-red-600"}>O <b>{normalizedPoint.open.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-green-600" : "text-red-600"}>H <b>{normalizedPoint.high.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-green-600" : "text-red-600"}>L <b>{normalizedPoint.low.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-green-600" : "text-red-600"}>C <b>{normalizedPoint.close.toFixed(2)}</b></span>
         <span className="text-gray-400">Chg <b className={chgAbs >= 0 ? "text-green-600" : "text-red-600"}>{chgPct.toFixed(2)}%</b></span>
         <span className="text-gray-400">Range <b className="text-black dark:text-white">{rangePct.toFixed(2)}%</b></span>
-        {indicators.sma && <span style={{ color: SMA_C }}>SMA(5) {smaVis && smaVis[readIdx] != null ? smaVis[readIdx].toFixed(2) : "—"}</span>}
-        {indicators.ema && <span style={{ color: EMA_C }}>EMA(9) {emaVis && emaVis[readIdx] != null ? emaVis[readIdx].toFixed(2) : "—"}</span>}
-        {indicators.vwap && <span style={{ color: VWAP_C }}>VWAP {vwapVis && vwapVis[readIdx] != null ? vwapVis[readIdx].toFixed(2) : "—"}</span>}
-        {indicators.bollinger && <span style={{ color: BOLL_C }}>BB(20,2)</span>}
+        {indicators.sma && <span className="text-amber-500">SMA(5)</span>}
+        {indicators.ema && <span className="text-blue-500">EMA(9)</span>}
+        {indicators.vwap && <span className="text-fuchsia-500">VWAP</span>}
+        {indicators.bollinger && <span className="text-teal-500">BB(20,2)</span>}
+      </div>
+      <div className="relative">
+        <div
+          ref={chartContainerRef}
+          className="w-full rounded-sm border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-black"
+          style={{ height: 380 }}
+        />
+
+        <div className="pointer-events-none absolute inset-0 flex pb-20 items-center z-10 justify-center">
+          <span className="select-none text-5xl font-bold text-gray-400/20 dark:text-gray-500/20">
+            Crixchange.
+          </span>
+        </div>
       </div>
 
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${W} ${totalH}`}
-        preserveAspectRatio="none"
-        style={{ width: "100%", height: totalH, display: "block", cursor: "crosshair" }}
-        onMouseMove={handleMouseMove}
-        onMouseDown={handleMouseDown}
-        onWheel={handleWheel}
-        onDoubleClick={resetView}
-      >
-        <defs>
-          <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={trendColor} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={trendColor} stopOpacity="0.02" />
-          </linearGradient>
-          <clipPath id="clipAbove"><rect x={PAD_L} y={mainTop} width={chartW} height={Math.max(0, baselineY - mainTop)} /></clipPath>
-          <clipPath id="clipBelow"><rect x={PAD_L} y={baselineY} width={chartW} height={Math.max(0, mainBottom - baselineY)} /></clipPath>
-        </defs>
-
-        {priceTicks.map((p, i) => (
-          <g key={i}>
-            <line x1={PAD_L} x2={PAD_L + chartW} y1={yMain(p)} y2={yMain(p)} stroke={GRID} strokeWidth="1" />
-            <text x={PAD_L + chartW + 6} y={yMain(p) + 4} fontSize="10.5" fill={AXIS}>{p.toFixed(2)}</text>
-          </g>
-        ))}
-
-        {chartType === "candlestick" && visible.map((d, i) => {
-          const up = d.close >= d.open;
-          const col = up ? upColor : downColor;
-          return (
-            <g key={i}>
-              <line x1={x(i)} x2={x(i)} y1={yMain(d.high)} y2={yMain(d.low)} stroke={col} strokeWidth="1" />
-              <rect x={x(i) - candleW / 2} y={Math.min(yMain(d.open), yMain(d.close))} width={candleW} height={Math.max(1, Math.abs(yMain(d.open) - yMain(d.close)))} fill={col} />
-            </g>
-          );
-        })}
-
-        {chartType === "bar" && visible.map((d, i) => {
-          const up = d.close >= d.open;
-          const col = up ? upColor : downColor;
-          const tick = candleW / 2;
-          return (
-            <g key={i} stroke={col} strokeWidth="1.4">
-              <line x1={x(i)} x2={x(i)} y1={yMain(d.high)} y2={yMain(d.low)} />
-              <line x1={x(i) - tick} x2={x(i)} y1={yMain(d.open)} y2={yMain(d.open)} />
-              <line x1={x(i)} x2={x(i) + tick} y1={yMain(d.close)} y2={yMain(d.close)} />
-            </g>
-          );
-        })}
-
-        {chartType === "area" && (
-          <>
-            <path d={areaPath} fill="url(#areaFill)" stroke="none" />
-            <path d={linePath} fill="none" stroke={trendColor} strokeWidth="1.8" />
-          </>
-        )}
-
-        {chartType === "line" && <path d={linePath} fill="none" stroke={trendColor} strokeWidth="1.8" />}
-
-        {chartType === "baseline" && (
-          <>
-            <path d={baselineAreaPath} fill={upColor} fillOpacity="0.22" clipPath="url(#clipAbove)" />
-            <path d={baselineAreaPath} fill={downColor} fillOpacity="0.22" clipPath="url(#clipBelow)" />
-            <path d={linePath} fill="none" stroke={NEUTRAL_LINE} strokeWidth="1.6" />
-            <line x1={PAD_L} x2={PAD_L + chartW} y1={baselineY} y2={baselineY} stroke={AXIS} strokeDasharray="3,3" strokeWidth="1" />
-          </>
-        )}
-
-        {indicators.bollinger && bollVis && (
-          <>
-            <path d={toPath(bollVis.upper, yMain)} fill="none" stroke={BOLL_C} strokeWidth="1" strokeDasharray="2,2" />
-            <path d={toPath(bollVis.lower, yMain)} fill="none" stroke={BOLL_C} strokeWidth="1" strokeDasharray="2,2" />
-            <path d={toPath(bollVis.mid, yMain)} fill="none" stroke={BOLL_C} strokeWidth="1" />
-          </>
-        )}
-        {indicators.sma && smaVis && <path d={toPath(smaVis, yMain)} fill="none" stroke={SMA_C} strokeWidth="1.4" />}
-        {indicators.ema && emaVis && <path d={toPath(emaVis, yMain)} fill="none" stroke={EMA_C} strokeWidth="1.4" />}
-        {indicators.vwap && vwapVis && <path d={toPath(vwapVis, yMain)} fill="none" stroke={VWAP_C} strokeWidth="1.4" />}
-
-        {panes.map((pane) => {
-          if (pane.key === "volume") {
-            const maxVol = Math.max(...visible.map((d) => d.volume), 1);
-            const yVol = (v) => pane.bottom - (v / maxVol) * (pane.h - 8);
-            return (
-              <g key="volume">
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={pane.top} y2={pane.top} stroke={GRID} strokeWidth="1" />
-                <text x={PAD_L} y={pane.top + 10} fontSize="10" fill={AXIS}>{pane.label}</text>
-                {visible.map((d, i) => {
-                  const up = d.close >= d.open;
-                  return <rect key={i} x={x(i) - candleW / 2} y={yVol(d.volume)} width={candleW} height={pane.bottom - yVol(d.volume)} fill={up ? upColor : downColor} fillOpacity="0.45" />;
-                })}
-              </g>
-            );
-          }
-          if (pane.key === "rsi" && indicators.rsi) {
-            const rsiVis = sliceInd(indicatorSeries.rsi);
-            const yRsi = (v) => pane.bottom - (v / 100) * (pane.h - 10) - 5;
-            return (
-              <g key="rsi">
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={pane.top} y2={pane.top} stroke={GRID} strokeWidth="1" />
-                <text x={PAD_L} y={pane.top + 10} fontSize="10" fill={AXIS}>{pane.label}</text>
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={yRsi(70)} y2={yRsi(70)} stroke={GRID} strokeDasharray="2,2" />
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={yRsi(30)} y2={yRsi(30)} stroke={GRID} strokeDasharray="2,2" />
-                <path d={toPath(rsiVis, yRsi)} fill="none" stroke={RSI_C} strokeWidth="1.4" />
-              </g>
-            );
-          }
-          if (pane.key === "macd" && indicators.macd) {
-            const macdVis = sliceInd(indicatorSeries.macd.macdLine);
-            const signalVis = sliceInd(indicatorSeries.macd.signalLine);
-            const histVis = sliceInd(indicatorSeries.macd.histogram);
-            const absVals = [...macdVis, ...signalVis, ...histVis].filter((v) => v != null).map((v) => Math.abs(v));
-            const absMax = Math.max(1e-6, ...(absVals.length ? absVals : [1]));
-            const yMacd = (v) => pane.top + pane.h / 2 - (v / absMax) * (pane.h / 2 - 8);
-            return (
-              <g key="macd">
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={pane.top} y2={pane.top} stroke={GRID} strokeWidth="1" />
-                <text x={PAD_L} y={pane.top + 10} fontSize="10" fill={AXIS}>{pane.label}</text>
-                <line x1={PAD_L} x2={PAD_L + chartW} y1={yMacd(0)} y2={yMacd(0)} stroke={GRID} strokeWidth="1" />
-                {visible.map((_, i) => histVis[i] != null ? (
-                  <rect key={i} x={x(i) - candleW / 2} y={Math.min(yMacd(0), yMacd(histVis[i]))} width={candleW} height={Math.max(1, Math.abs(yMacd(histVis[i]) - yMacd(0)))} fill={histVis[i] >= 0 ? upColor : downColor} fillOpacity="0.5" />
-                ) : null)}
-                <path d={toPath(macdVis, yMacd)} fill="none" stroke={MACD_C} strokeWidth="1.3" />
-                <path d={toPath(signalVis, yMacd)} fill="none" stroke={SIGNAL_C} strokeWidth="1.3" />
-              </g>
-            );
-          }
-          return null;
-        })}
-
-        {timeTickIdx.map((i, k) => (
-          <text key={k} x={x(i)} y={totalH - 6} fontSize="10" fill={AXIS} textAnchor="middle">{visible[i] ? visible[i].time.toFixed(1) : ""}</text>
-        ))}
-
-        {hoverI != null && (
-          <>
-            <line x1={x(hoverI)} x2={x(hoverI)} y1={mainTop} y2={panes.length ? panes[panes.length - 1].bottom : mainBottom} stroke={AXIS} strokeDasharray="3,3" strokeWidth="1" />
-            <line x1={PAD_L} x2={PAD_L + chartW} y1={yMain(hoverD.close)} y2={yMain(hoverD.close)} stroke={AXIS} strokeDasharray="3,3" strokeWidth="1" />
-            <rect x={PAD_L + chartW} y={yMain(hoverD.close) - 8} width={PAD_R - 2} height="16" fill={hoverUp ? upColor : downColor} />
-            <text x={PAD_L + chartW + 6} y={yMain(hoverD.close) + 4} fontSize="10.5" fill="#fff">{hoverD.close.toFixed(2)}</text>
-          </>
-        )}
-      </svg>
+      {(indicators.rsi || indicators.macd) && (
+        <div className="flex flex-wrap gap-3 px-1 text-[11px] text-gray-500 dark:text-gray-400">
+          {indicators.rsi && <span>RSI: {rsiValue}</span>}
+          {indicators.macd && <span>MACD: {macdValue}</span>}
+        </div>
+      )}
+      
     </div>
   );
 });
@@ -1010,7 +949,7 @@ function TradesPanel({ marketTrades, myTrades, activeTab, setActiveTab }) {
         {list.length === 0 && <div className="text-center text-xs text-gray-400 py-6">No trades yet</div>}
         {list.map((t, i) => (
           <div key={t.id ?? i} className={`grid grid-cols-3 gap-1   text-[11px] font-semibold font-sans tabular-nums ${i === 0 ? "trade-row-new" : ""}`}>
-            
+
             <span className={`text-left transition-colors ml-3 font-semibold duration-500 ${t.up ? "text-green-600" : "text-red-600"}`}>{t.price.toFixed(2)}</span>
             <span className="text-left ml-4 text-gray-900 dark:text-gray-400 tracking-wide font-semibold">{t.qty}</span>
             <span className="text-right mr-3 text-gray-900 dark:text-gray-400 tracking-wide font-semibold">{t.time}</span>
@@ -1025,7 +964,27 @@ function TradesPanel({ marketTrades, myTrades, activeTab, setActiveTab }) {
    MAIN TERMINAL
    ========================================================================= */
 export default function CrixchangeTradingTerminal() {
-  const isDark = false; // theme is fixed to the app's light design system — no manual toggle
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+  });
+  const dispatch=useDispatch();
+  useEffect(() => {
+    const syncTheme = () => {
+      const dark = document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+      setIsDark(dark);
+    };
+
+    syncTheme();
+    window.addEventListener("storage", syncTheme);
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => {
+      window.removeEventListener("storage", syncTheme);
+      observer.disconnect();
+    };
+  }, []);
+
   const [selectedTeamId, setSelectedTeamId] = useState(IPL_TEAMS[2].id);
   const selectedTeam = IPL_TEAMS.find((t) => t.id === selectedTeamId);
 
@@ -1071,7 +1030,7 @@ export default function CrixchangeTradingTerminal() {
 
   const ballData = seriesByTeam[selectedTeamId] || [];
 
-  const [interval_, setInterval_] = useState("1b");
+  const [interval_, setInterval_] = useState("1m");
   const [chartType, setChartType] = useState("candlestick");
   const [indicators, setIndicators] = useState({ sma: true, ema: false, rsi: false, macd: false, vwap: false, bollinger: false, volume: true });
   const toggleIndicator = (key) => setIndicators((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -1146,7 +1105,7 @@ export default function CrixchangeTradingTerminal() {
   return (
     <div className={isDark ? "dark" : ""}>
       <div
-        className="bg-white  dark:bg-black text-black dark:text-white mt-12 font-sans flex flex-col min-h-screen lg:h-screen"
+        className="bg-white  dark:bg-black text-black mt-10 dark:text-white  font-sans flex flex-col min-h-[calc(100vh-20vh)] lg:h-screen"
       >
         <TerminalHeader team={selectedTeam} current={current} change={change} changePct={changePct} dayHigh={dayHigh} dayLow={dayLow} dayVol={dayVol} />
 
@@ -1155,7 +1114,7 @@ export default function CrixchangeTradingTerminal() {
             <OrderBookPanel price={current.close || 1} viewMode={viewMode} setViewMode={setViewMode} isDark={isDark} upColor={upColor} downColor={downColor} />
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col lg:overflow-y-auto">
+          <div className="flex-1 min-w-0  flex flex-col lg:overflow-y-auto">
             <ChartToolbar
               interval_={interval_}
               setInterval_={setInterval_}
@@ -1167,8 +1126,9 @@ export default function CrixchangeTradingTerminal() {
               onZoomOut={() => chartRef.current && chartRef.current.zoomOut()}
               onReset={() => chartRef.current && chartRef.current.reset()}
             />
-            <div className="px-3 py-2">
+            <div >
               <TerminalChart
+
                 ref={chartRef}
                 data={candleData}
                 chartType={chartType}
@@ -1177,6 +1137,7 @@ export default function CrixchangeTradingTerminal() {
                 resetSignal={resetSignal}
                 upColor={upColor}
                 downColor={downColor}
+                interval={interval_}
               />
             </div>
             <OrderEntry
