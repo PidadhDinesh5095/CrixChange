@@ -23,6 +23,7 @@ import currentMatchRoutes from './routes/currentMatchRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import { initTrading } from './controllers/tradingController.js';
 import tradingRoutes from './routes/tradingRoutes.js';
+import ipoRoutes from './routes/ipoRoutes.js';
 {/**import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import tradingRoutes from './routes/tradingRoutes.js';
@@ -93,6 +94,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/currentMatches', currentMatchRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/trading', tradingRoutes);
+app.use('/api/ipos', ipoRoutes);
 // Remove this dummy GET route, it's not needed for registration
 // app.get('/register',(req,res)=>{res.send("Hello")});
 {/**

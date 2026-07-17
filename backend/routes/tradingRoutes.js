@@ -4,6 +4,7 @@ import {getStocks,getDepthBySymbol,executeOrder,getOrderById,cancelOrderById,get
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router()
+router.post('/order',executeOrder)
 router.use(protect);
 
 
@@ -13,7 +14,7 @@ router.get('/stocks',getStocks )
 
 router.get('/depth/:symbol',getDepthBySymbol )
 
-router.post('/order',executeOrder)
+
 
 router.get('/order/:orderId',getOrderById )
 

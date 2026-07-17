@@ -32,6 +32,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import MatchPerformancePage from './pages/MatchPerformancePage';
 import PrivacyPolicy from './pages/privacy-policy';
 import TermsConditions from './pages/terms-conditions';
+import IPOsPage from './pages/IPOsPage';
+import IPODetailsPage from './pages/IPODetailsPage';
 import CricketTradingChart from '../src/components/layout/CustomChart.jsx';
 // Styles
 import './App.css';
@@ -126,6 +128,22 @@ const AppContent = () => {
                 element={
                   <ProtectedRoute>
                     <PortfolioPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ipos"
+                element={
+                  <ProtectedRoute>
+                    <IPOsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ipos/:id"
+                element={
+                  <ProtectedRoute>
+                    <IPODetailsPage />
                   </ProtectedRoute>
                 }
               />

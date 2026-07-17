@@ -19,8 +19,10 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
-import { useSelector,useDispatch } from "react-redux";
-import {placeOrder} from "../../store/slices/tradingSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { orderPlace } from "../../store/slices/tradingSlice";
+import {getWalletBalance} from '../../store/slices/walletSlice';
+
 import { use } from "react";
 
 /* =========================================================================
@@ -364,8 +366,8 @@ function ChartToolbar({ interval_, setInterval_, chartType, setChartType, indica
             key={v}
             onClick={() => setInterval_(v)}
             className={`px-2.5 py-1 text-xs font-medium rounded-sm  transition-colors ${interval_ === v
-                ? "bg-black text-white dark:bg-white dark:text-black "
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
+              ? "bg-black text-white dark:bg-white dark:text-black "
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
               }`}
           >
             {label}
@@ -695,7 +697,7 @@ const TerminalChart = forwardRef(function TerminalChart(
           {indicators.macd && <span>MACD: {macdValue}</span>}
         </div>
       )}
-      
+
     </div>
   );
 });
@@ -790,14 +792,26 @@ function OrderBookPanel({ price, viewMode, setViewMode, isDark, upColor, downCol
    ORDER ENTRY (Market/Limit, Buy + Sell — same width as the chart above it
    because both live inside the same flex-1 center column)
    ========================================================================= */
-function OrderSide({ side, orderMode, price, setPrice, qty, setQty, marketPrice, teamShort, onSubmit }) {
+function OrderSide({ side, orderMode, price, setPrice, qty, setQty,balance, marketPrice, teamShort, onSubmit }) {
   const isBuy = side === "buy";
   const effPrice = orderMode === "market" ? marketPrice : (price ?? marketPrice);
   const total = effPrice * qty;
-  const walletBalance = 50000;
+  const walletBalance = balance;
   const maxQty = effPrice > 0 ? Math.floor(walletBalance / effPrice) : 0;
-  const fee = total * 0.001;
+  const fee = total * 0.03;
   const pcts = [25, 50, 75, 100];
+  const handleQtyChange = (e) => {
+    const value = e.target.value;
+
+    if (value === "") {
+      setQty("");
+      return;
+    }
+
+    if (/^\d*\.?\d{0,2}$/.test(value)) {
+      setQty(value);
+    }
+  };
 
   return (
     <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-1">
@@ -807,9 +821,16 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, marketPrice,
       </div>
       <input
         type="number"
+        step="0.01"
         disabled={orderMode === "market"}
         value={orderMode === "market" ? marketPrice.toFixed(2) : price ?? ""}
-        onChange={(e) => setPrice(Number(e.target.value))}
+        onChange={(e) => {
+          const value = e.target.value;
+
+          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+            setPrice(value === "" ? "" : Number(value));
+          }
+        }}
         className="w-full mb-1 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-400 font-semibold bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-sm disabled:opacity-50 focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
       />
 
@@ -817,11 +838,14 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, marketPrice,
         <span className="text-[12px] text-gray-900 dark:text-gray-400 font-medium">Amount</span>
         <span className="text-[12px] text-gray-900 dark:text-gray-400 font-medium">{teamShort}</span>
       </div>
+
+
       <input
         type="number"
-        min={1}
+        min="1"
+        step="0.01"
         value={qty}
-        onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+        onChange={handleQtyChange}
         className="w-full mb-1 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-400 font-semibold bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
       />
 
@@ -840,14 +864,23 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, marketPrice,
         <div className="flex justify-between text-md font-semibold text-black dark:text-white"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
       </div>
 
-      <button onClick={onSubmit} className={`w-full h-8 py-2 rounded-sm font-bold text-sm text-white transition-colors ${isBuy ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}>
+      <button
+        onClick={onSubmit}
+        disabled={total > balance}
+        className={`w-full h-8 py-2 rounded-sm font-bold text-sm text-white transition-colors ${total > balance
+            ? "bg-gray-400 cursor-not-allowed"
+            : isBuy
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-red-600 hover:bg-red-700"
+          }`}
+      >
         {isBuy ? "Buy" : "Sell"} {teamShort} for ₹ {total.toFixed(2)}
       </button>
     </div>
   );
 }
 
-function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit }) {
+function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit,balance }) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 p-1">
       <div className="flex gap-2 ">
@@ -862,8 +895,8 @@ function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBu
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <OrderSide side="buy" orderMode={orderMode} price={buyPrice} setPrice={setBuyPrice} qty={buyQty} setQty={setBuyQty} marketPrice={current.close} teamShort={teamShort} onSubmit={() => onSubmit("buy")} />
-        <OrderSide side="sell" orderMode={orderMode} price={sellPrice} setPrice={setSellPrice} qty={sellQty} setQty={setSellQty} marketPrice={current.close} teamShort={teamShort} onSubmit={() => onSubmit("sell")} />
+        <OrderSide side="buy" orderMode={orderMode} price={buyPrice} setPrice={setBuyPrice} qty={buyQty} setQty={setBuyQty} marketPrice={current.close} balance={balance} teamShort={teamShort} onSubmit={() => onSubmit("buy")} />
+        <OrderSide side="sell" orderMode={orderMode} price={sellPrice} setPrice={setSellPrice} qty={sellQty} setQty={setSellQty} marketPrice={current.close} balance={balance} teamShort={teamShort} onSubmit={() => onSubmit("sell")} />
       </div>
     </div>
   );
@@ -968,7 +1001,16 @@ export default function CrixchangeTradingTerminal() {
     if (typeof window === "undefined") return false;
     return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
   });
-  const dispatch=useDispatch();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { balance } = useSelector((state) => state.wallet);
+  useEffect(() => {
+    if(balance===0){
+       dispatch(getWalletBalance());
+    }
+  }, [dispatch, balance]);
+
+
   useEffect(() => {
     const syncTheme = () => {
       const dark = document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
@@ -1062,7 +1104,7 @@ export default function CrixchangeTradingTerminal() {
   const [sellQty, setSellQty] = useState(1);
   const [buyPrice, setBuyPrice] = useState(null);
   const [sellPrice, setSellPrice] = useState(null);
-  useEffect(() => { setBuyPrice(current.close); setSellPrice(current.close); }, [current.close]);
+
 
   const [toast, setToast] = useState(null);
   const [myTrades, setMyTrades] = useState([]);
@@ -1089,12 +1131,44 @@ export default function CrixchangeTradingTerminal() {
 
   const toggleFav = (id) => setFavorites((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const placeOrder = (side) => {
-    const qty = side === "buy" ? buyQty : sellQty;
-    const price = orderMode === "market" ? current.close : (side === "buy" ? (buyPrice ?? current.close) : (sellPrice ?? current.close));
-    setMyTrades((prev) => [{ id: `mine-${Date.now()}`, time: `Ov ${current.time.toFixed(1)}`, price, qty, up: side === "buy" }, ...prev].slice(0, 30));
-    setToast(`${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order placed — ${qty} ${selectedTeam.short} @ ₹${price.toFixed(2)}`);
-    setTimeout(() => setToast(null), 2500);
+  const placeOrder = async (side) => {
+    console.log("Placing order:", side, orderMode, buyQty, sellQty, buyPrice, sellPrice);
+    const formData = {
+      side: side.toUpperCase(),
+      type: orderMode.toUpperCase(),
+      qty: side === "buy" ? buyQty : sellQty,
+      price: Math.round(
+        (
+          orderMode === "market"
+            ? current.close
+            : (side === "buy"
+              ? (buyPrice ?? current.close)
+              : (sellPrice ?? current.close))
+        ) * 100
+      ), market_id: selectedTeam.short,
+      timestamp: Date.now(),
+      user,
+    };
+    try {
+      console.log("Dispatching orderPlace with formData:", formData);
+      const result = await dispatch(orderPlace(formData));
+      const data = result.payload;
+      if (orderPlace.fulfilled.match(result)) {
+        toast.success(`${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order placed successfully — ${formData.qty} ${selectedTeam.short} @ ₹${formData.price.toFixed(2)}`);
+      } else if (orderPlace.rejected.match(result)) {
+        toast.error(`Failed to place ${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order — ${data?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error(`Error placing order: ${error.message}`);
+    }
+
+
+
+
+    // setMyTrades((prev) => [{ id: `mine-${Date.now()}`, time: `Ov ${current.time.toFixed(1)}`, price, qty, up: side === "buy" }, ...prev].slice(0, 30));
+    // setToast(`${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order pllllllllaced — ${qty} ${selectedTeam.short} @ ₹${price.toFixed(2)}`);
+    // setTimeout(() => setToast(null), 2500);
   };
 
   const chartRef = useRef(null);
@@ -1144,6 +1218,7 @@ export default function CrixchangeTradingTerminal() {
               orderMode={orderMode}
               setOrderMode={setOrderMode}
               current={current}
+              balance={balance}
               teamShort={selectedTeam.short}
               buyQty={buyQty} setBuyQty={setBuyQty}
               sellQty={sellQty} setSellQty={setSellQty}

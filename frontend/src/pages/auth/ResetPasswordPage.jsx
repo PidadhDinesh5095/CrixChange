@@ -119,7 +119,7 @@ const ResetPasswordPage = () => {
           {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              {/* Password */}
+             
               <div>
                 <label htmlFor="password" className="form-label">
                   New Password

@@ -1,10 +1,13 @@
 
 import Order from '../models/Order.js'
-import Wallet from '../models/Wallet.js'
+import wallet from '../models/Wallet.js'
 import Stock from '../models/Stock.js'
 import StockBalance from '../models/StockBalance.js'
+import User from '../models/User.js'
+import mongoose from 'mongoose'
+import IPO from '../models/IPO.js'
 
-const INR_CURRENCY = 'INR'
+const INR= 'INR'
 
 // In-memory orderbooks
 const ORDERBOOKS = new Map()
@@ -24,8 +27,8 @@ function getSideMap(book, side) {
 }
 
 function addOrderToBook(order) {
-  if (order.type !== 'LIMIT' || order.price == null) return
-  const remainingQty = order.qty - order.filledQty
+  if (order.orderType !== 'LIMIT' || order.price == null) return
+  const remainingQty = order.quantity - order.filledQuantity
   if (remainingQty <= 0) return
   const symbol = SYMBOL_BY_STOCK_ID.get(String(order.stockId))
   if (!symbol) return
@@ -33,7 +36,7 @@ function addOrderToBook(order) {
   const sideMap = getSideMap(book, order.side)
   const level = sideMap.get(order.price) ?? { totalQty: 0, orders: [] }
   level.totalQty += remainingQty
-  level.orders.push({ orderId: String(order._id), userId: String(order.userId), qty: order.qty, filledQty: order.filledQty, createdAt: order.createdAt.toISOString() })
+  level.orders.push({ orderId: String(order._id), userId: String(order.userId), qty: order.quantity, filledQty: order.filledQuantity, createdAt: order.createdAt.toISOString() })
   sideMap.set(order.price, level)
 }
 
@@ -56,7 +59,7 @@ function reduceOrderFromBook(order, reductionQty) {
 
 function removeOrderFromBook(order) {
   if (order.price == null) return
-  const remainingQty = order.qty - order.filledQty
+  const remainingQty = order.quantity - order.filledQuantity
   if (remainingQty <= 0) return
   const symbol = SYMBOL_BY_STOCK_ID.get(String(order.stockId))
   if (!symbol) return
@@ -79,6 +82,49 @@ function getDepth(symbol) {
   const asks = Object.fromEntries([...book.asks.entries()].sort((a, b) => a[0] - b[0]).map(([price, level]) => [String(price), { totalQty: level.totalQty, orders: level.orders }]))
   return { bids, asks }
 }
+function printOrderBook(symbol) {
+  const normalized = symbol.toUpperCase();
+  const book = ORDERBOOKS.get(normalized);
+
+  if (!book) {
+    console.log(`No order book found for ${normalized}`);
+    return;
+  }
+
+  console.log(`\n========== ${normalized} ORDER BOOK ==========`);
+
+  console.log("\nASKS");
+  [...book.asks.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .forEach(([price, level]) => {
+      console.log(
+        `₹${price} | Qty: ${level.totalQty} | Orders: ${level.orders.length}`
+      );
+
+      level.orders.forEach(order => {
+        console.log(
+          `   ${order.orderId} | User: ${order.userId} | Remaining: ${order.qty - order.filledQty}`
+        );
+      });
+    });
+
+  console.log("\nBIDS");
+  [...book.bids.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .forEach(([price, level]) => {
+      console.log(
+        `₹${price} | Qty: ${level.totalQty} | Orders: ${level.orders.length}`
+      );
+
+      level.orders.forEach(order => {
+        console.log(
+          `   ${order.orderId} | User: ${order.userId} | Remaining: ${order.qty - order.filledQty}`
+        );
+      });
+    });
+
+  console.log("======================================\n");
+}
 
 function getUserId(req) {
   const fromHeader = req.header('x-user-id')
@@ -97,7 +143,7 @@ function getUserId(req) {
 async function ensureCashBalance(userId) {
   let existing = await wallet.findOne({ userId, currency: INR })
   if (existing) return existing
-  existing = await Wallet.create({ userId, currency: INR, balance: 0, frozenBalance: 0 })
+  existing = await wallet.create({ userId, currency: INR, balance: 0, frozenBalance: 0 })
   return existing
 }
 
@@ -111,17 +157,17 @@ async function ensureStockBalance(userId, stockId) {
 async function lockBuyFunds(userId, price, qty) {
   const amount = price * qty
   const cash = await ensureCashBalance(userId)
-  if (cash.total < amount) throw new Error('Insufficient INR balance for buy LIMIT order')
-  cash.total -= amount
-  cash.locked += amount
+  if (cash.balance < amount) throw new Error('Insufficient INR balance for buy LIMIT order')
+  cash.balance -= amount
+  cash.frozenBalance += amount
   await cash.save()
 }
 
 async function unlockBuyFunds(userId, amount) {
   if (amount <= 0) return
   const cash = await ensureCashBalance(userId)
-  cash.total += amount
-  cash.locked = Math.max(0, cash.locked - amount)
+  cash.balance += amount
+  cash.frozenBalance = Math.max(0, cash.frozenBalance - amount)
   await cash.save()
 }
 
@@ -163,8 +209,8 @@ export const getDepthBySymbol = async (req, res) => {
 // freezeAmount for MARKET — see marketOrderExecution). This call finalizes
 // that reservation into an actual spend, and credits the stock to the buyer.
 async function settleBuyerFill(userId, stockId, amount, qty) {
-  const wallet = await Wallet.findOne({ userId })
-  await wallet.debitFrozen(amount, `Buy settlement: ${qty} unit(s) of stock ${stockId}`)
+  const userwallet = await wallet.findOne({ userId })
+  await userwallet.unfreezeAmount(amount, `Buy settlement: ${qty} unit(s) of stock ${stockId}`)
 
   const stockBal = await ensureStockBalance(userId, stockId)
   stockBal.total += qty // buyer now owns this quantity outright
@@ -182,8 +228,8 @@ async function settleSellerFill(userId, stockId, amount, qty) {
   stockBal.locked -= qty // permanently leaves locked — does NOT return to total
   await stockBal.save()
 
-  const wallet = await Wallet.findOne({ userId })
-  await wallet.credit(amount, `Sell settlement: ${qty} unit(s) of stock ${stockId}`)
+  const userwallet = await wallet.findOne({ userId })
+  await userwallet.credit(amount, `Sell settlement: ${qty} unit(s) of stock ${stockId}`)
 }
 
 
@@ -195,8 +241,10 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
   const book = ensureBook(symbol)
   const sideMap = getSideMap(book, opposingSide)
   const level = sideMap.get(price)
+  printOrderBook(symbol );
 
   if (!level) {
+    console.log(`No resting orders at price ${price} for ${opposingSide}. Creating new order for ${side} of ${qty} units.`);
     const incomingOrder = await Order.create({
       userId, side, orderType: 'LIMIT', stockId, price,
       quantity: qty, filledQuantity: 0, status: 'OPEN'
@@ -251,74 +299,128 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
 }
 
 async function marketOrderExecution(userId, side, stockId, qty) {
-  if (qty <= 0) return
-  const opposingSide = side === 'BUY' ? 'SELL' : 'BUY'
-  const symbol = SYMBOL_BY_STOCK_ID.get(String(stockId))
-  if (!symbol) return
-  const book = ensureBook(symbol)
-  const sideMap = getSideMap(book, opposingSide)
+  if (qty <= 0) return;
 
-  let remaining = qty
-  const sortedPrices = [...sideMap.keys()].sort((a, b) => (side === 'BUY' ? a - b : b - a))
+  const opposingSide = side === "BUY" ? "SELL" : "BUY";
+  const symbol = SYMBOL_BY_STOCK_ID.get(String(stockId));
+  if (!symbol) return;
 
-  outer:
-  for (const price of sortedPrices) {
-    if (remaining <= 0) break
-    const level = sideMap.get(price)
-    if (!level) continue
+  const book = ensureBook(symbol);
+  const sideMap = getSideMap(book, opposingSide);
 
-    const restingOrders = [...level.orders]
+  let remaining = qty;
+  let filledQty = 0;
+  let totalAmount = 0;
+
+  const sortedPrices = [...sideMap.keys()].sort((a, b) =>
+    side === "BUY" ? a - b : b - a
+  );
+
+  outer: for (const price of sortedPrices) {
+    if (remaining <= 0) break;
+
+    const level = sideMap.get(price);
+    if (!level) continue;
+
+    const restingOrders = [...level.orders];
 
     for (const resting of restingOrders) {
-      if (remaining <= 0) break
+      if (remaining <= 0) break;
 
-      const restingRemaining = resting.qty - resting.filledQty
-      if (restingRemaining <= 0) continue
+      const restingRemaining = resting.qty - resting.filledQty;
+      if (restingRemaining <= 0) continue;
 
-      const fillQty = Math.min(remaining, restingRemaining)
-      const amount = price * fillQty
+      const fillQty = Math.min(remaining, restingRemaining);
+      const amount = price * fillQty;
 
-      // Market BUY was never pre-locked (price unknown at submit time).
-      // Check + freeze right before settling this specific fill.
-      if (side === 'BUY') {
-        const wallet = await Wallet.findOne({ userId })
-        if (wallet.availableBalance < amount) break outer // can't afford this or any worse price
-        await wallet.freezeAmount(amount)
+      // Market BUY: check balance just before each fill
+      if (side === "BUY") {
+        const buyerWallet = await Wallet.findOne({ userId });
+
+        if (!buyerWallet || buyerWallet.availableBalance < amount) {
+          break outer;
+        }
+
+        await buyerWallet.freezeAmount(amount);
       }
 
-      const oppositeOrder = await Order.findById(resting.orderId)
-      if (!oppositeOrder) continue
+      const oppositeOrder = await Order.findById(resting.orderId);
+      if (!oppositeOrder) continue;
 
-      oppositeOrder.filledQuantity += fillQty
-      oppositeOrder.status = oppositeOrder.filledQuantity >= oppositeOrder.quantity ? 'CLOSED' : 'OPEN'
-      await oppositeOrder.save()
+      oppositeOrder.filledQuantity += fillQty;
+      oppositeOrder.status =
+        oppositeOrder.filledQuantity >= oppositeOrder.quantity
+          ? "CLOSED"
+          : "OPEN";
 
-      reduceOrderFromBook({ price, side: opposingSide, id: resting.orderId }, fillQty)
+      await oppositeOrder.save();
 
-      const buyerUserId = side === 'BUY' ? userId : resting.userId
-      const sellerUserId = side === 'BUY' ? resting.userId : userId
-      await settleBuyerFill(buyerUserId, stockId, amount, fillQty)
-      await settleSellerFill(sellerUserId, stockId, amount, fillQty)
+      reduceOrderFromBook(
+        {
+          price,
+          side: opposingSide,
+          id: resting.orderId,
+        },
+        fillQty
+      );
 
-      remaining -= fillQty
+      const buyerUserId = side === "BUY" ? userId : resting.userId;
+      const sellerUserId = side === "BUY" ? resting.userId : userId;
+
+      await settleBuyerFill(
+        buyerUserId,
+        stockId,
+        amount,
+        fillQty
+      );
+
+      await settleSellerFill(
+        sellerUserId,
+        stockId,
+        amount,
+        fillQty
+      );
+
+      totalAmount += amount;
+      filledQty += fillQty;
+      remaining -= fillQty;
     }
   }
 
-  const filledQty = qty - remaining
-  const status = remaining <= 0 ? 'CLOSED' : filledQty > 0 ? 'PARTIALLY_FILLED' : 'CANCELLED'
+  const averagePrice =
+    filledQty > 0 ? Number((totalAmount / filledQty).toFixed(2)) : null;
+
+  const status =
+    remaining === 0
+      ? "CLOSED"
+      : filledQty > 0
+      ? "PARTIALLY_FILLED"
+      : "CANCELLED";
 
   await Order.create({
-    userId, side, orderType: 'MARKET', stockId, price: null,
-    quantity: qty, filledQuantity: filledQty, status
-  })
+    userId,
+    side,
+    orderType: "MARKET",
+    stockId,
+    price: null,
+    averagePrice,
+    quantity: qty,
+    filledQuantity: filledQty,
+    status,
+  });
 
-  // Market SELL locked full qty upfront in executeOrder; give back what didn't sell.
-  if (side === 'SELL' && remaining > 0) {
-    await unlockSellQty(userId, stockId, remaining)
+  // Unlock unsold shares for market sell
+  if (side === "SELL" && remaining > 0) {
+    await unlockSellQty(userId, stockId, remaining);
   }
-  // Market BUY: nothing to unlock — we only ever froze what actually got matched.
 
-  return { filledQty, remainingQty: remaining }
+  return {
+    filledQty,
+    remainingQty: remaining,
+    averagePrice,
+    totalAmount,
+    status,
+  };
 }
 
 
@@ -326,7 +428,8 @@ async function marketOrderExecution(userId, side, stockId, qty) {
 
 export const executeOrder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    console.log('Received order execution request:', req.body);
+    const userId = req?.body?.user?.id;
     if (!userId) return res.status(401).json({ error: 'missing user id (x-user-id header or userId field)' })
 
     const sideText = typeof req.body?.side === 'string' ? req.body.side.toUpperCase() : ''
@@ -337,9 +440,15 @@ export const executeOrder = async (req, res) => {
 
     const side = sideText
     const type = typeText
-    const parsedPrice = rawPrice === null || rawPrice === undefined ? null : Number(rawPrice)
-    const price = parsedPrice !== null && Number.isFinite(parsedPrice) ? parsedPrice : null
+    const parsedPrice =
+      rawPrice === null || rawPrice === undefined
+        ? null
+        : Number(rawPrice);
 
+    const price =
+      parsedPrice !== null && Number.isFinite(parsedPrice)
+        ? Number((parsedPrice / 100).toFixed(2))
+        : null;
     if (!['BUY', 'SELL'].includes(side)) return res.status(400).json({ error: 'side must be BUY or SELL' })
     if (!['LIMIT', 'MARKET'].includes(type)) return res.status(400).json({ error: 'type must be LIMIT or MARKET' })
     if (!Number.isFinite(qty) || qty <= 0) return res.status(400).json({ error: 'qty must be a positive number' })
@@ -377,6 +486,7 @@ export const executeOrder = async (req, res) => {
         ? await limitOrderExecution(userId, side, stock._id, price, qty)
         : await marketOrderExecution(userId, side, stock._id, qty)
     } catch (matchErr) {
+      console.error('Error during order matching:', matchErr);
       // Matching failed after we'd already locked funds/stock — give it back.
       if (locked?.kind === 'BUY') await unlockBuyFunds(userId, locked.amount)
       if (locked?.kind === 'SELL') await unlockSellQty(userId, stock._id, locked.qty)
@@ -403,6 +513,7 @@ export const executeOrder = async (req, res) => {
       status: result.remainingQty === 0 ? 'CLOSED' : result.filledQty > 0 ? 'PARTIALLY_FILLED' : 'OPEN'
     })
   } catch (err) {
+    console.error('Error executing order:', err);
     return res.status(400).json({ error: err instanceof Error ? err.message : 'internal error' })
   }
 }
@@ -417,7 +528,7 @@ export const getOrderById = async (req, res) => {
 
 export const cancelOrderById = async (req, res) => {
   try {
-    const userId = req.user.id
+    const userId = req.body?.user?.id;
     if (!userId) return res.status(401).json({ error: 'missing user id (x-user-id header or userId field)' })
     const orderId = req.params.orderId
     if (!mongoose.isValidObjectId(orderId)) return res.status(400).json({ error: 'invalid order id' })
@@ -467,22 +578,161 @@ export const getFills = async (req, res) => {
 }
 
 async function seedStocks() {
+  console.log('Seeding initial stocks...');
   const cnt = await Stock.countDocuments()
   if (cnt > 0) return
   await Stock.create([{ title: 'Chennai Super Kings', symbol: 'CSK' }, { title: 'Mumbai Indians', symbol: 'MI' }, { title: 'Royal Challengers Bangalore', symbol: 'RCB' }, { title: 'Kolkata Knight Riders', symbol: 'KKR' }, { title: 'Delhi Capitals', symbol: 'DC' }, { title: 'Sunrisers Hyderabad', symbol: 'SRH' }, { title: 'Rajasthan Royals', symbol: 'RR' }, { title: 'Punjab Kings', symbol: 'PBKS' }, { title: 'Lucknow Super Giants', symbol: 'LSG' }, { title: 'Gujarat Titans', symbol: 'GT' }])
 }
 
 async function hydrateOrderBooks() {
+  console.log('Hydrating order books from database...')
   const stocks = await Stock.find()
   for (const stock of stocks) {
     SYMBOL_BY_STOCK_ID.set(String(stock._id), stock.symbol)
     ensureBook(stock.symbol)
   }
-  const openLimitOrders = await Order.find({ type: 'LIMIT', status: { $in: ['OPEN', 'PARTIALLY_FILLED'] } }).sort({ createdAt: 1 })
-  for (const order of openLimitOrders) addOrderToBook(order)
+  const openLimitOrders = await Order.find({ orderType: 'LIMIT', status: { $in: ['OPEN', 'PARTIALLY_FILLED'] } }).sort({ createdAt: 1 })
+  console.log(openLimitOrders.length, 'open limit orders found in database.'  );
+  for (const order of openLimitOrders) {
+    console.log(`Adding order ${order._id} to order book for stock ${SYMBOL_BY_STOCK_ID.get(String(order.stockId))}`)
+    addOrderToBook(order)
+   
+  }
+}
+async function hydrateIPOs() {
+  const cnt = await IPO.countDocuments()
+  if (cnt > 0) return
+
+  const stocks = await Stock.find({}, "_id title symbol").lean()
+
+  const stockMap = Object.fromEntries(
+    stocks.map(stock => [stock.symbol, stock])
+  )
+
+  const openTime = new Date()
+  const closeTime = new Date(openTime)
+  closeTime.setMonth(closeTime.getMonth() + 1)
+
+  await IPO.create([
+    {
+      stockId: stockMap.CSK._id,
+      teamName: stockMap.CSK.title,
+      symbol: "CSK",
+      ipoPrice: 99,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.MI._id,
+      teamName: stockMap.MI.title,
+      symbol: "MI",
+      ipoPrice: 95,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.RCB._id,
+      teamName: stockMap.RCB.title,
+      symbol: "RCB",
+      ipoPrice: 92,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.KKR._id,
+      teamName: stockMap.KKR.title,
+      symbol: "KKR",
+      ipoPrice: 88,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.GT._id,
+      teamName: stockMap.GT.title,
+      symbol: "GT",
+      ipoPrice: 84,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.SRH._id,
+      teamName: stockMap.SRH.title,
+      symbol: "SRH",
+      ipoPrice: 81,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.RR._id,
+      teamName: stockMap.RR.title,
+      symbol: "RR",
+      ipoPrice: 78,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.DC._id,
+      teamName: stockMap.DC.title,
+      symbol: "DC",
+      ipoPrice: 75,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.LSG._id,
+      teamName: stockMap.LSG.title,
+      symbol: "LSG",
+      ipoPrice: 72,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    },
+    {
+      stockId: stockMap.PBKS._id,
+      teamName: stockMap.PBKS.title,
+      symbol: "PBKS",
+      ipoPrice: 69,
+      totalShares: 10000,
+      availableShares: 10000,
+      status: "OPEN",
+      openTime,
+      closeTime
+    }
+  ])
 }
 
+
+
 export const initTrading = async () => {
+  console.log('Initializing trading system...')
   await seedStocks()
   await hydrateOrderBooks()
+  await hydrateIPOs()
+   printOrderBook('RCB');
 }

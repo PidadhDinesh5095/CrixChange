@@ -27,10 +27,19 @@ const orderSchema = new mongoose.Schema({
     min: [1, 'Quantity must be at least 1']
   },
   price: {
-    type: Number,
-    required: true,
-    min: [0, 'Price cannot be negative']
+  type: Number,
+  required: function () {
+    return this.orderType === "LIMIT";
   },
+  min: [0, "Price cannot be negative"]
+},
+averagePrice: {
+  type: Number,
+  required: function () {
+    return this.orderType === "MARKET";
+  },
+  min: [0, "Average price cannot be negative"]
+},
   
   filledQuantity: {
     type: Number,

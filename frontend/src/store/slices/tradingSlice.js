@@ -38,11 +38,11 @@ export const getTeams = createAsyncThunk(
   }
 );
 
-export const placeOrder = createAsyncThunk(
+export const orderPlace = createAsyncThunk(
   'trading/placeOrder',
   async (orderData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/trading/orders', orderData);
+      const response = await api.post('/trading/order', orderData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to place order');
@@ -153,16 +153,16 @@ const tradingSlice = createSlice({
       })
 
       // Place order
-      .addCase(placeOrder.pending, (state) => {
+      .addCase(orderPlace.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(placeOrder.fulfilled, (state, action) => {
+      .addCase(orderPlace.fulfilled, (state, action) => {
         state.isLoading = false;
         state.orders.unshift(action.payload.data.order);
         state.error = null;
       })
-      .addCase(placeOrder.rejected, (state, action) => {
+      .addCase(orderPlace.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
