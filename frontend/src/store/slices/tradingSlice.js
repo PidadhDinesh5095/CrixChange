@@ -159,12 +159,12 @@ const tradingSlice = createSlice({
       })
       .addCase(orderPlace.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.orders.unshift(action.payload.data.order);
+        state.orders.unshift(action.payload.order);
         state.error = null;
       })
       .addCase(orderPlace.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.error = action.payload.message;
       })
 
       // Get user orders

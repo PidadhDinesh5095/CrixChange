@@ -19,9 +19,10 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { orderPlace } from "../../store/slices/tradingSlice";
-import {getWalletBalance} from '../../store/slices/walletSlice';
+import { getWalletBalance } from '../../store/slices/walletSlice';
 
 import { use } from "react";
 
@@ -322,7 +323,8 @@ function StatBlock({ label, value, colorClass }) {
 
 function TerminalHeader({ team, current, change, changePct, dayHigh, dayLow, dayVol }) {
   const isUp = change >= 0;
-  const colorClass = isUp ? "text-green-600" : "text-red-600";
+  const colorClass = isUp ? "#2A9C70" : "#CA3D50";
+  const colors = isUp ? "text-emerald-600" : "text-rose-600";
   return (
     <div className="flex flex-wrap h-11 items-center gap-4 p-1 border-b border-gray-200 dark:border-gray-800 shrink-0">
       <div className="flex items-center gap-2.5">
@@ -333,18 +335,19 @@ function TerminalHeader({ team, current, change, changePct, dayHigh, dayLow, day
           {team.short}
         </div>
         <div>
-          <div className="text-[10.5px] font-semibold text-gray-400">{team.name}</div>
-          <div className={`flex items-center gap-1 text-md font-bold font-sans leading-tight ${colorClass}`}>
+          <div className="text-[12px] font-semibold text-black dark:text-white">{team.name}</div>
+          <div className={`flex items-center gap-1 text-md font-bold font-sans leading-tight `}
+            style={{ color: colorClass }}>
             ₹{current.close.toFixed(2)}
             {isUp ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
           </div>
         </div>
       </div>
       <div className="w-px h-6 bg-gray-200 font-sans dark:bg-white " />
-      <StatBlock label="Change" value={`${isUp ? "+" : ""}${change.toFixed(2)} (${changePct.toFixed(2)}%)`} colorClass={colorClass} />
-      <StatBlock label="High" value={dayHigh.toFixed(2)} />
-      <StatBlock label="Low" value={dayLow.toFixed(2)} />
-      <StatBlock label="Volume" value={dayVol.toFixed(0)} />
+      <StatBlock label="Change" value={`${isUp ? "+" : ""}${change.toFixed(2)} (${changePct.toFixed(2)}%)`} colorClass={colors} />
+      <StatBlock label="High" value={dayHigh.toFixed(2)} colorClass={colors} />
+      <StatBlock label="Low" value={dayLow.toFixed(2)} colorClass={colors} />
+      <StatBlock label="Volume" value={dayVol.toFixed(0)} colorClass={colors}/>
 
     </div>
   );
@@ -666,10 +669,10 @@ const TerminalChart = forwardRef(function TerminalChart(
   return (
     <div className="flex flex-col gap-2 ">
       <div className="flex flex-wrap h-3 items-center  gap-x-4 gap-y-1 text-[11px] font-sans px-1">
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>O <b>{normalizedPoint.open.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>H <b>{normalizedPoint.high.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>L <b>{normalizedPoint.low.toFixed(2)}</b></span>
-        <span className={hoverUp ? "text-green-600" : "text-red-600"}>C <b>{normalizedPoint.close.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-[#2A9C70]" : "text-[#F6465D]"}>O <b>{normalizedPoint.open.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-[#2A9C70]" : "text-[#F6465D]"}>H <b>{normalizedPoint.high.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-[#2A9C70]" : "text-[#F6465D]"}>L <b>{normalizedPoint.low.toFixed(2)}</b></span>
+        <span className={hoverUp ? "text-[#2A9C70]" : "text-[#F6465D]"}>C <b>{normalizedPoint.close.toFixed(2)}</b></span>
         <span className="text-gray-400">Chg <b className={chgAbs >= 0 ? "text-green-600" : "text-red-600"}>{chgPct.toFixed(2)}%</b></span>
         <span className="text-gray-400">Range <b className="text-black dark:text-white">{rangePct.toFixed(2)}%</b></span>
         {indicators.sma && <span className="text-amber-500">SMA(5)</span>}
@@ -792,7 +795,7 @@ function OrderBookPanel({ price, viewMode, setViewMode, isDark, upColor, downCol
    ORDER ENTRY (Market/Limit, Buy + Sell — same width as the chart above it
    because both live inside the same flex-1 center column)
    ========================================================================= */
-function OrderSide({ side, orderMode, price, setPrice, qty, setQty,balance, marketPrice, teamShort, onSubmit }) {
+function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, marketPrice, teamShort, onSubmit }) {
   const isBuy = side === "buy";
   const effPrice = orderMode === "market" ? marketPrice : (price ?? marketPrice);
   const total = effPrice * qty;
@@ -868,10 +871,10 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty,balance, mark
         onClick={onSubmit}
         disabled={total > balance}
         className={`w-full h-8 py-2 rounded-sm font-bold text-sm text-white transition-colors ${total > balance
-            ? "bg-gray-400 cursor-not-allowed"
-            : isBuy
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-red-600 hover:bg-red-700"
+          ? "bg-gray-400 cursor-not-allowed"
+          : isBuy
+            ? "bg-[#2A9C70] hover:bg-green-700"
+            : "bg-red-600 hover:bg-red-700"
           }`}
       >
         {isBuy ? "Buy" : "Sell"} {teamShort} for ₹ {total.toFixed(2)}
@@ -880,7 +883,7 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty,balance, mark
   );
 }
 
-function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit,balance }) {
+function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit, balance }) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 p-1">
       <div className="flex gap-2 ">
@@ -939,8 +942,8 @@ function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, 
                 <div className="text-[10px] text-gray-500 dark:text-gray-400 tracking-wide font-semibold truncate">{t.name}</div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-[0.68rem] font-sans">₹{stat.price.toFixed(2)}</div>
-                <div className={`text-[9px] font-sans ${stat.changePct >= 0 ? "text-green-600" : "text-red-600"}`}>{stat.changePct >= 0 ? "+" : ""}{stat.changePct.toFixed(2)}%</div>
+                <div className="text-[0.68rem] font-bold font-sans">₹{stat.price.toFixed(2)}</div>
+                <div className={`text-[10px] font-bold font-sans ${stat.changePct >= 0 ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>{stat.changePct >= 0 ? "+" : ""}{stat.changePct.toFixed(2)}%</div>
               </div>
               <Star
                 size={13}
@@ -983,7 +986,7 @@ function TradesPanel({ marketTrades, myTrades, activeTab, setActiveTab }) {
         {list.map((t, i) => (
           <div key={t.id ?? i} className={`grid grid-cols-3 gap-1   text-[11px] font-semibold font-sans tabular-nums ${i === 0 ? "trade-row-new" : ""}`}>
 
-            <span className={`text-left transition-colors ml-3 font-semibold duration-500 ${t.up ? "text-green-600" : "text-red-600"}`}>{t.price.toFixed(2)}</span>
+            <span className={`text-left transition-colors ml-3 font-semibold duration-500 ${t.up ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>{t.price.toFixed(2)}</span>
             <span className="text-left ml-4 text-gray-900 dark:text-gray-400 tracking-wide font-semibold">{t.qty}</span>
             <span className="text-right mr-3 text-gray-900 dark:text-gray-400 tracking-wide font-semibold">{t.time}</span>
           </div>
@@ -1005,8 +1008,8 @@ export default function CrixchangeTradingTerminal() {
   const { user } = useSelector((state) => state.auth);
   const { balance } = useSelector((state) => state.wallet);
   useEffect(() => {
-    if(balance===0){
-       dispatch(getWalletBalance());
+    if (balance === 0) {
+      dispatch(getWalletBalance());
     }
   }, [dispatch, balance]);
 
@@ -1106,7 +1109,7 @@ export default function CrixchangeTradingTerminal() {
   const [sellPrice, setSellPrice] = useState(null);
 
 
-  const [toast, setToast] = useState(null);
+  
   const [myTrades, setMyTrades] = useState([]);
   const [activeTradesTab, setActiveTradesTab] = useState("market");
   const [favorites, setFavorites] = useState(() => new Set());
@@ -1147,16 +1150,17 @@ export default function CrixchangeTradingTerminal() {
         ) * 100
       ), market_id: selectedTeam.short,
       timestamp: Date.now(),
-      user,
+      userId:user.id,
     };
     try {
       console.log("Dispatching orderPlace with formData:", formData);
       const result = await dispatch(orderPlace(formData));
       const data = result.payload;
+      
       if (orderPlace.fulfilled.match(result)) {
-        toast.success(`${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order placed successfully — ${formData.qty} ${selectedTeam.short} @ ₹${formData.price.toFixed(2)}`);
+        toast.success(data.message);
       } else if (orderPlace.rejected.match(result)) {
-        toast.error(`Failed to place ${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order — ${data?.message || 'Unknown error'}`);
+        toast.error(`Failed to place ${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order — ${data || 'Unknown error'}`);
       }
     } catch (error) {
       console.error("Error placing order:", error);
@@ -1172,8 +1176,8 @@ export default function CrixchangeTradingTerminal() {
   };
 
   const chartRef = useRef(null);
-  const upColor = isDark ? "#22c55e" : "#16a34a";
-  const downColor = isDark ? "#ef4444" : "#dc2626";
+  const upColor = '#2A9C70';
+  const downColor = '#CA3D50';
   const resetSignal = `${selectedTeamId}|${interval_}`;
 
   return (
@@ -1247,11 +1251,8 @@ export default function CrixchangeTradingTerminal() {
           </div>
         </div>
 
-        {toast && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-black border border-gray-200 dark:border-white rounded-sm px-4 py-2.5 text-xs font-medium shadow-lg z-50 max-w-[90vw] text-center">
-            {toast}
-          </div>
-        )}
+       
+       
       </div>
     </div>
   );

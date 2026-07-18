@@ -13,6 +13,7 @@ import connectDB from './config/database.js';
 import { connectRedis } from './config/redis.js';
 import { connectMailServer } from './config/Email.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+import {startStockStatsFlusher} from './utils/stockStatService.js';
 //import { setupSocketHandlers } from './socket/socketHandlers.js';
 
 // Import routes
@@ -54,6 +55,7 @@ await connectRedis();
 connectMailServer();
 // Initialize trading engine (seeds stocks and hydrates orderbooks)
 await initTrading();
+startStockStatsFlusher();
 // Security middleware
 app.use(helmet());
 app.use(compression());
