@@ -5,11 +5,14 @@ import api from '../../services/api';
 const initialState = {
   matches: [],
   teams: [],
+  stocks: [],
   orders: [],
   orderBook: { buyOrders: [], sellOrders: [] },
   selectedMatch: null,
   selectedTeam: null,
   isLoading: false,
+  isStocksLoading:false,
+  orderIsLoading:false,
   error: null,
 };
 
@@ -34,6 +37,18 @@ export const getTeams = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch teams');
+    }
+  }
+);
+
+export const getMarketStocks = createAsyncThunk(
+  'trading/getMarketStocks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/trading/stocks');
+      return response.data.stocks || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch market stocks');
     }
   }
 );
@@ -152,18 +167,33 @@ const tradingSlice = createSlice({
         state.error = action.payload;
       })
 
+      // Get market stocks
+      .addCase(getMarketStocks.pending, (state) => {
+        state.isStocksLoading = true;
+        state.error = null;
+      })
+      .addCase(getMarketStocks.fulfilled, (state, action) => {
+        state.isStocksLoading = false;
+        state.stocks = action.payload;
+        state.error = null;
+      })
+      .addCase(getMarketStocks.rejected, (state, action) => {
+        state.isStocksLoading = false;
+        state.error = action.payload;
+      })
+
       // Place order
       .addCase(orderPlace.pending, (state) => {
-        state.isLoading = true;
+        state.orderIsLoading = true;
         state.error = null;
       })
       .addCase(orderPlace.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.orderIsLoading = false;
         state.orders.unshift(action.payload.order);
         state.error = null;
       })
       .addCase(orderPlace.rejected, (state, action) => {
-        state.isLoading = false;
+        state.orderIsLoading = false;
         state.error = action.payload.message;
       })
 

@@ -8,6 +8,7 @@ import React, {
   useImperativeHandle,
 } from "react";
 import { createChart, CrosshairMode } from "lightweight-charts";
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import {
   Search,
   Star,
@@ -23,6 +24,7 @@ import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { orderPlace } from "../../store/slices/tradingSlice";
 import { getWalletBalance } from '../../store/slices/walletSlice';
+import { getMarketStocks } from '../../store/slices/tradingSlice';
 
 import { use } from "react";
 
@@ -347,7 +349,7 @@ function TerminalHeader({ team, current, change, changePct, dayHigh, dayLow, day
       <StatBlock label="Change" value={`${isUp ? "+" : ""}${change.toFixed(2)} (${changePct.toFixed(2)}%)`} colorClass={colors} />
       <StatBlock label="High" value={dayHigh.toFixed(2)} colorClass={colors} />
       <StatBlock label="Low" value={dayLow.toFixed(2)} colorClass={colors} />
-      <StatBlock label="Volume" value={dayVol.toFixed(0)} colorClass={colors}/>
+      <StatBlock label="Volume" value={dayVol.toFixed(0)} colorClass={colors} />
 
     </div>
   );
@@ -795,7 +797,7 @@ function OrderBookPanel({ price, viewMode, setViewMode, isDark, upColor, downCol
    ORDER ENTRY (Market/Limit, Buy + Sell — same width as the chart above it
    because both live inside the same flex-1 center column)
    ========================================================================= */
-function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, marketPrice, teamShort, onSubmit }) {
+function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, marketPrice, teamShort, onSubmit, isLoading }) {
   const isBuy = side === "buy";
   const effPrice = orderMode === "market" ? marketPrice : (price ?? marketPrice);
   const total = effPrice * qty;
@@ -803,6 +805,7 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, mar
   const maxQty = effPrice > 0 ? Math.floor(walletBalance / effPrice) : 0;
   const fee = total * 0.03;
   const pcts = [25, 50, 75, 100];
+  console.log(isLoading);
   const handleQtyChange = (e) => {
     const value = e.target.value;
 
@@ -869,21 +872,77 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, mar
 
       <button
         onClick={onSubmit}
-        disabled={total > balance}
-        className={`w-full h-8 py-2 rounded-sm font-bold text-sm text-white transition-colors ${total > balance
+        disabled={total > balance || isLoading}
+        className={`w-full h-8 py-2 rounded-sm font-bold text-sm text-white transition-colors flex items-center justify-center gap-2 ${total > balance || isLoading
           ? "bg-gray-400 cursor-not-allowed"
           : isBuy
             ? "bg-[#2A9C70] hover:bg-green-700"
             : "bg-red-600 hover:bg-red-700"
           }`}
       >
-        {isBuy ? "Buy" : "Sell"} {teamShort} for ₹ {total.toFixed(2)}
+        {isBuy ? (
+          isLoading ? (
+            <>
+              <svg
+                className="w-4 h-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+              Buying...
+            </>
+          ) : (
+            <>Buy {teamShort} for ₹ {total.toFixed(2)}</>
+          )
+        ) : (
+          isLoading ? (
+            <>
+              <svg
+                className="w-4 h-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+              Selling...
+            </>
+          ) : (
+            <>Sell {teamShort} for ₹ {total.toFixed(2)}</>
+          )
+        )}
       </button>
     </div>
   );
 }
 
-function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit, balance }) {
+function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBuyQty, sellQty, setSellQty, buyPrice, setBuyPrice, sellPrice, setSellPrice, onSubmit, balance, buyLoading, sellLoading }) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 p-1">
       <div className="flex gap-2 ">
@@ -891,15 +950,15 @@ function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBu
           <button
             key={m}
             onClick={() => setOrderMode(m)}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-sm  capitalize transition-colors ${orderMode === m ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white" : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"}`}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-sm capitalize transition-colors ${orderMode === m ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white" : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"}`}
           >
             {m}
           </button>
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <OrderSide side="buy" orderMode={orderMode} price={buyPrice} setPrice={setBuyPrice} qty={buyQty} setQty={setBuyQty} marketPrice={current.close} balance={balance} teamShort={teamShort} onSubmit={() => onSubmit("buy")} />
-        <OrderSide side="sell" orderMode={orderMode} price={sellPrice} setPrice={setSellPrice} qty={sellQty} setQty={setSellQty} marketPrice={current.close} balance={balance} teamShort={teamShort} onSubmit={() => onSubmit("sell")} />
+        <OrderSide side="buy" orderMode={orderMode} price={buyPrice} setPrice={setBuyPrice} qty={buyQty} setQty={setBuyQty} marketPrice={current.close} balance={balance} teamShort={teamShort} isLoading={buyLoading} onSubmit={() => onSubmit("buy")} />
+        <OrderSide side="sell" orderMode={orderMode} price={sellPrice} setPrice={setSellPrice} qty={sellQty} setQty={setSellQty} marketPrice={current.close} balance={balance} teamShort={teamShort} isLoading={sellLoading} onSubmit={() => onSubmit("sell")} />
       </div>
     </div>
   );
@@ -908,8 +967,12 @@ function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBu
 /* =========================================================================
    RIGHT SIDEBAR — team/stock list (search + rows) and trades tabs
    ========================================================================= */
-function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, onToggleFav, search, setSearch }) {
-  const filtered = teams.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) || t.short.toLowerCase().includes(search.toLowerCase()));
+function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, onToggleFav, search, setSearch, isLoading }) {
+  const filtered = teams.filter(
+    (t) =>
+      (t.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.short || '').toLowerCase().includes(search.toLowerCase())
+  );
   const sorted = [...filtered].sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0));
 
   return (
@@ -926,39 +989,60 @@ function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, 
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {sorted.map((t) => {
-          const stat = teamStats[t.id] || { price: 0, changePct: 0 };
-          const isSel = t.id === selectedTeamId;
-          const isFav = favorites.has(t.id);
-          return (
-            <button
-              key={t.id}
-              onClick={() => onSelect(t.id)}
-              className={`w-full flex items-center gap-2 p-1 text-left border-b border-gray-100 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${isSel ? "bg-gray-100 dark:bg-gray-900 border-l-2 border-l-black dark:border-l-white" : ""}`}
-            >
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: t.color, color: "#000" }}>{t.short}</div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate">{t.short}</div>
-                <div className="text-[10px] text-gray-500 dark:text-gray-400 tracking-wide font-semibold truncate">{t.name}</div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-[0.68rem] font-bold font-sans">₹{stat.price.toFixed(2)}</div>
-                <div className={`text-[10px] font-bold font-sans ${stat.changePct >= 0 ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>{stat.changePct >= 0 ? "+" : ""}{stat.changePct.toFixed(2)}%</div>
-              </div>
-              <Star
-                size={13}
-                onClick={(e) => { e.stopPropagation(); onToggleFav(t.id); }}
-                className={isFav ? "text-black dark:text-white fill-black dark:fill-white shrink-0" : "text-gray-300 dark:text-gray-700 shrink-0"}
-              />
-            </button>
-          );
-        })}
-        {sorted.length === 0 && <div className="text-center text-xs text-gray-400 py-6">No teams match your search</div>}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <LoadingSpinner size="sm" text="LOADING TEAMS..." />
+          </div>
+        ) : (
+          <>
+            {sorted.map((t) => {
+              const stat = teamStats[t.id] || { price: 0, changePct: 0 };
+              const isSel = t.id === selectedTeamId;
+              const isFav = favorites.has(t.id);
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onSelect(t.id)}
+                  className={`w-full flex items-center gap-2 p-1 text-left border-b border-gray-100 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${isSel ? "bg-gray-100 dark:bg-gray-900 border-l-2 border-l-black dark:border-l-white" : ""}`}
+                >
+                  <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold shrink-0 bg-gray-200 dark:bg-gray-800">
+                    {t.image ? (
+                      <img
+                        src={t.image}
+                        alt={t.short || ""}
+                        className="w-full h-full object-cover"
+                        style={{
+                          imageRendering: "auto",
+                        }}
+                      />
+                    ) : (
+                      t.short || '--'
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold truncate">{t.title}</div>
+                    <div className="text-[10px] text-gray-500 dark:text-gray-400 tracking-wide font-semibold truncate">{t.symbol}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className={`text-[12px] font-bold font-sans text-black`}>{t.price >= 0 ? "+" : ""}{t.price.toFixed(2)}</div>
+
+                    <div className={`text-[10px] font-bold font-sans ${t.changePercent >= 0 ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>{t.changePercent >= 0 ? "+" : ""}{t.changePercent.toFixed(2)}%</div>
+                  </div>
+                  <Star
+                    size={13}
+                    onClick={(e) => { e.stopPropagation(); onToggleFav(t.id); }}
+                    className={isFav ? "text-black dark:text-white fill-black dark:fill-white shrink-0" : "text-gray-300 dark:text-gray-700 shrink-0"}
+                  />
+                </button>
+              );
+            })}
+            {sorted.length === 0 && <div className="text-center text-xs text-gray-400 py-6">No teams match your search</div>}
+          </>
+        )}
       </div>
     </div>
   );
 }
-
 function TradesPanel({ marketTrades, myTrades, activeTab, setActiveTab }) {
   const list = activeTab === "market" ? marketTrades : myTrades;
   return (
@@ -1004,13 +1088,19 @@ export default function CrixchangeTradingTerminal() {
     if (typeof window === "undefined") return false;
     return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
   });
+  const [pendingSide, setPendingSide] = useState(null);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { balance } = useSelector((state) => state.wallet);
+  const { orderIsLoading, stocks, isStocksLoading } = useSelector((state) => state.trading);
   useEffect(() => {
     if (balance === 0) {
       dispatch(getWalletBalance());
     }
+    if (!stocks || stocks.length === 0) {
+      dispatch(getMarketStocks());
+    }
+
   }, [dispatch, balance]);
 
 
@@ -1109,7 +1199,7 @@ export default function CrixchangeTradingTerminal() {
   const [sellPrice, setSellPrice] = useState(null);
 
 
-  
+
   const [myTrades, setMyTrades] = useState([]);
   const [activeTradesTab, setActiveTradesTab] = useState("market");
   const [favorites, setFavorites] = useState(() => new Set());
@@ -1150,13 +1240,14 @@ export default function CrixchangeTradingTerminal() {
         ) * 100
       ), market_id: selectedTeam.short,
       timestamp: Date.now(),
-      userId:user.id,
+      userId: user.id,
     };
     try {
+      setPendingSide(side);
       console.log("Dispatching orderPlace with formData:", formData);
       const result = await dispatch(orderPlace(formData));
       const data = result.payload;
-      
+
       if (orderPlace.fulfilled.match(result)) {
         toast.success(data.message);
       } else if (orderPlace.rejected.match(result)) {
@@ -1165,6 +1256,8 @@ export default function CrixchangeTradingTerminal() {
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error(`Error placing order: ${error.message}`);
+    } finally {
+      setPendingSide(null);
     }
 
 
@@ -1229,13 +1322,15 @@ export default function CrixchangeTradingTerminal() {
               buyPrice={buyPrice} setBuyPrice={setBuyPrice}
               sellPrice={sellPrice} setSellPrice={setSellPrice}
               onSubmit={placeOrder}
+              buyLoading={orderIsLoading && pendingSide === "buy"}
+              sellLoading={orderIsLoading && pendingSide === "sell"}
             />
           </div>
 
           <div className="w-full lg:w-72 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
             <div className="h-64 lg:h-auto lg:flex-1 flex flex-col min-h-0">
               <TeamListPanel
-                teams={IPL_TEAMS}
+                teams={stocks}
                 teamStats={teamStats}
                 selectedTeamId={selectedTeamId}
                 onSelect={setSelectedTeamId}
@@ -1243,6 +1338,7 @@ export default function CrixchangeTradingTerminal() {
                 onToggleFav={toggleFav}
                 search={search}
                 setSearch={setSearch}
+                isLoading={isStocksLoading}
               />
             </div>
             <div className="h-64 lg:h-auto lg:flex-1 flex flex-col min-h-0">
@@ -1251,8 +1347,8 @@ export default function CrixchangeTradingTerminal() {
           </div>
         </div>
 
-       
-       
+
+
       </div>
     </div>
   );

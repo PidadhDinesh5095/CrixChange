@@ -102,7 +102,7 @@ const AppContent = () => {
                 }
               />
               <Route
-                path="/trading"
+                path="/markets"
                 element={
                   <ProtectedRoute>
                     {console.log("TradingPage route rendered")}

@@ -49,7 +49,7 @@ const Header = () => {
 
   const navLinks = [
     { to: '/dashboard', label: 'DASHBOARD', icon: BarChart3 },
-    { to: '/trading', label: 'TRADING', icon: TrendingUp },
+    { to: '/markets', label: 'MARKETS', icon: TrendingUp },
     {to: '/ipos', label: 'IPOs', icon: Activity},
     { to: '/portfolio', label: 'PORTFOLIO', icon: User },
     { to: '/analytics', label: 'ANALYTICS', icon: BarChart3 },

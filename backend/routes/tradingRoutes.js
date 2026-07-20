@@ -5,12 +5,8 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router()
 router.post('/order',executeOrder)
-router.use(protect);
-
-
-
-
 router.get('/stocks',getStocks )
+router.use(protect);
 
 router.get('/depth/:symbol',getDepthBySymbol )
 
