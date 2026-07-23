@@ -110,7 +110,7 @@ const IPOsPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 font-mono text-gray-700 dark:text-gray-300">{ipo.symbol}</td>
+                        <td className="p-3 font-sans text-gray-700 dark:text-gray-300">{ipo.symbol}</td>
                         <td className="p-3 font-bold text-black dark:text-white">₹{ipo.ipoPrice}</td>
                         <td className="p-3 text-gray-700 dark:text-gray-300">{ipo.totalShares?.toLocaleString()}</td>
                         <td className="p-3 text-gray-700 dark:text-gray-300">{ipo.availableShares?.toLocaleString()}</td>

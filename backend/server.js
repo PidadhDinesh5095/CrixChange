@@ -14,7 +14,7 @@ import { connectRedis } from './config/redis.js';
 import { connectMailServer } from './config/Email.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import {startStockStatsFlusher} from './utils/stockStatService.js';
-//import { setupSocketHandlers } from './socket/socketHandlers.js';
+
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -25,14 +25,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import { initTrading } from './controllers/tradingController.js';
 import tradingRoutes from './routes/tradingRoutes.js';
 import ipoRoutes from './routes/ipoRoutes.js';
-{/**import userRoutes from './routes/userRoutes.js';
-import walletRoutes from './routes/walletRoutes.js';
-import tradingRoutes from './routes/tradingRoutes.js';
-import sportsRoutes from './routes/sportsRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
 
-// Load environment variables**/}
 dotenv.config();
 
 
@@ -47,13 +40,21 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
+export {io};
+io.on('connection', (socket) => {
+  console.log('new user:', socket.id);
+
+  socket.on('disconnect', (reason) => {
+    console.log('user left:', socket.id, '| reason:', reason);
+  });
+});
 
 // Connect to MongoDB
 connectDB();
 await connectRedis();
 
 connectMailServer();
-// Initialize trading engine (seeds stocks and hydrates orderbooks)
+
 await initTrading();
 startStockStatsFlusher();
 // Security middleware
@@ -97,16 +98,7 @@ app.use('/api/currentMatches', currentMatchRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/trading', tradingRoutes);
 app.use('/api/ipos', ipoRoutes);
-// Remove this dummy GET route, it's not needed for registration
-// app.get('/register',(req,res)=>{res.send("Hello")});
-{/**
-app.use('/api/users', userRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/trading', tradingRoutes);
-app.use('/api/sports', sportsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/kyc', kycRoutes);
-app.use('/api/payments', paymentRoutes);**/}
+
 
 // Health check endpoint
 app.get('/', (req, res) => {

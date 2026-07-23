@@ -9,13 +9,16 @@ import Fill from '../models/Fill.js'
 import IPO from '../models/IPO.js'
 import { seedStockStats } from '../utils/stockStatService.js';
 import { updateStockStats } from '../utils/stockStatService.js';
+import { io } from '../server.js'
+import { STOCK_STATS } from '../utils/stockStatService.js'
+
 
 const INR = 'INR'
 
 // In-memory orderbooks
 const ORDERBOOKS = new Map()
 const SYMBOL_BY_STOCK_ID = new Map()
-const STOCK_STATS = new Map();
+
 
 function ensureBook(symbol) {
   const normalized = symbol.toUpperCase()
@@ -528,7 +531,14 @@ export const executeOrder = async (req, res) => {
       // exactly price*filledQty via debitFrozen, nothing further is owed here
       // unless you cancel the resting remainder later.
     }
+    const stats = STOCK_STATS.get(stock._id.toString());
+    const stockId=stock._id;
 
+    if (stats) {
+      io.emit('stats', {stockId , stats });
+    }
+
+    
     return res.status(201).json({
       message: `Successfully traded ${marketId}  at ${type === 'LIMIT' ? price : result.averagePrice}.`,
       order: result.order,

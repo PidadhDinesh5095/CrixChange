@@ -3,14 +3,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getMarketStocks } from '../store/slices/tradingSlice'; 
+import { getMarketStocks } from '../store/slices/tradingSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import socket from '../hooks/socket';
+
 
 const TradingPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { stocks, isLoading, error } = useSelector((state) => state.trading);
   const [search, setSearch] = useState('');
+
 
   useEffect(() => {
     if (!stocks || stocks.length === 0) {
@@ -23,6 +26,35 @@ const TradingPage = () => {
       toast.error(error);
     }
   }, [error]);
+  useEffect(() => {
+
+    if (!socket.connected) {
+
+      socket.connect();
+
+    }
+
+    const handleConnect = () => {
+      console.log('✅ Socket connected:', socket.id);
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log('❌ Socket disconnected:', reason);
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('stats',(stats)=>{
+      console.log(stats);
+    })
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.disconnect();
+    };
+  }, []);
+
 
   const visibleStocks = useMemo(() => {
     const keyword = search.toLowerCase();
@@ -88,11 +120,11 @@ const TradingPage = () => {
                             )}
                           </div>
                           <div>
-                            <div className="font-bold text-black dark:text-white">{stock.title}</div>
+                            <div className="font-bold text-black font-sans dark:text-white">{stock.title}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-3 font-mono text-gray-700 dark:text-gray-300">{stock.symbol}</td>
+                      <td className="p-3 font-sans text-gray-700 dark:text-gray-300">{stock.symbol}</td>
                       <td className="p-3 font-bold text-black dark:text-white">{formatCurrency(stock.price)}</td>
                       <td className="p-3 text-gray-700 dark:text-gray-300">{formatCurrency(stock.lastPrice)}</td>
                       <td className={`p-3 font-bold ${stock.change >= 0 ? 'text-[#008F75]' : 'text-red-500'}`}>

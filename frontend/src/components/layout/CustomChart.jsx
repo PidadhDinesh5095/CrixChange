@@ -26,8 +26,6 @@ import { orderPlace } from "../../store/slices/tradingSlice";
 import { getWalletBalance } from '../../store/slices/walletSlice';
 import { getMarketStocks } from '../../store/slices/tradingSlice';
 
-import { use } from "react";
-
 /* =========================================================================
    IPL TEAMS (10 only) — colored initials, no external logo dependency
    ========================================================================= */
@@ -805,7 +803,7 @@ function OrderSide({ side, orderMode, price, setPrice, qty, setQty, balance, mar
   const maxQty = effPrice > 0 ? Math.floor(walletBalance / effPrice) : 0;
   const fee = total * 0.03;
   const pcts = [25, 50, 75, 100];
-  console.log(isLoading);
+
   const handleQtyChange = (e) => {
     const value = e.target.value;
 
@@ -965,15 +963,22 @@ function OrderEntry({ orderMode, setOrderMode, current, teamShort, buyQty, setBu
 }
 
 /* =========================================================================
-   RIGHT SIDEBAR — team/stock list (search + rows) and trades tabs
+   RIGHT SIDEBAR — team/stock list (search + rows)
+   NOTE: `teams` here comes from the real `stocks` Redux slice (Mongo docs),
+   which uses `_id`, not the mock IPL_TEAMS `id`. All id/favorite lookups
+   are normalized below via `getId()` so favorites and selection actually work.
    ========================================================================= */
+const getId = (t) => t?._id ?? t?.id;
+
 function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, onToggleFav, search, setSearch, isLoading }) {
-  const filtered = teams.filter(
+  const filtered = (teams || []).filter(
     (t) =>
-      (t.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (t.short || '').toLowerCase().includes(search.toLowerCase())
+      (t.title || '').toLowerCase().includes(search.toLowerCase()) ||
+      (t.symbol || '').toLowerCase().includes(search.toLowerCase())
   );
-  const sorted = [...filtered].sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0));
+  const sorted = [...filtered].sort(
+    (a, b) => (favorites.has(getId(b)) ? 1 : 0) - (favorites.has(getId(a)) ? 1 : 0)
+  );
 
   return (
     <div className="flex-1 min-h-0 flex flex-col border-b border-gray-200 dark:border-gray-900">
@@ -996,27 +1001,28 @@ function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, 
         ) : (
           <>
             {sorted.map((t) => {
-              const stat = teamStats[t.id] || { price: 0, changePct: 0 };
-              const isSel = t.id === selectedTeamId;
-              const isFav = favorites.has(t.id);
+              const id = getId(t);
+              const stat = teamStats[id] || { price: t.price ?? 0, changePct: t.changePercent ?? 0 };
+              const isSel = id === selectedTeamId;
+              const isFav = favorites.has(id);
               return (
                 <button
-                  key={t.id}
-                  onClick={() => onSelect(t.id)}
+                  key={id}
+                  onClick={() => onSelect(id)}
                   className={`w-full flex items-center gap-2 p-1 text-left border-b border-gray-100 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${isSel ? "bg-gray-100 dark:bg-gray-900 border-l-2 border-l-black dark:border-l-white" : ""}`}
                 >
                   <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold shrink-0 bg-gray-200 dark:bg-gray-800">
                     {t.image ? (
                       <img
                         src={t.image}
-                        alt={t.short || ""}
+                        alt={t.symbol || ""}
                         className="w-full h-full object-cover"
                         style={{
                           imageRendering: "auto",
                         }}
                       />
                     ) : (
-                      t.short || '--'
+                      t.symbol || '--'
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1024,13 +1030,16 @@ function TeamListPanel({ teams, teamStats, selectedTeamId, onSelect, favorites, 
                     <div className="text-[10px] text-gray-500 dark:text-gray-400 tracking-wide font-semibold truncate">{t.symbol}</div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className={`text-[12px] font-bold font-sans text-black`}>{t.price >= 0 ? "+" : ""}{t.price.toFixed(2)}</div>
-
-                    <div className={`text-[10px] font-bold font-sans ${t.changePercent >= 0 ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>{t.changePercent >= 0 ? "+" : ""}{t.changePercent.toFixed(2)}%</div>
+                    <div className="text-[12px] font-bold font-sans text-black dark:text-white">
+                      {stat.price >= 0 ? "+" : ""}{stat.price.toFixed(2)}
+                    </div>
+                    <div className={`text-[10px] font-bold font-sans ${stat.changePct >= 0 ? "text-[#2A9C70]" : "text-[#F6465D]"}`}>
+                      {stat.changePct >= 0 ? "+" : ""}{stat.changePct.toFixed(2)}%
+                    </div>
                   </div>
                   <Star
                     size={13}
-                    onClick={(e) => { e.stopPropagation(); onToggleFav(t.id); }}
+                    onClick={(e) => { e.stopPropagation(); onToggleFav(id); }}
                     className={isFav ? "text-black dark:text-white fill-black dark:fill-white shrink-0" : "text-gray-300 dark:text-gray-700 shrink-0"}
                   />
                 </button>
@@ -1120,18 +1129,40 @@ export default function CrixchangeTradingTerminal() {
     };
   }, []);
 
-  const [selectedTeamId, setSelectedTeamId] = useState(IPL_TEAMS[2].id);
-  const selectedTeam = IPL_TEAMS.find((t) => t.id === selectedTeamId);
+  // selectedTeamId now tracks the REAL stock id (Mongo _id), not the mock
+  // IPL_TEAMS id. Starts null until stocks load, then defaults to the first one.
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
 
-  const seedFor = (id) => id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 97 + 50;
+  useEffect(() => {
+    if (!selectedTeamId && stocks && stocks.length > 0) {
+      setSelectedTeamId(getId(stocks[0]));
+    }
+  }, [stocks, selectedTeamId]);
+
+  const selectedStock = useMemo(
+    () => (stocks || []).find((t) => getId(t) === selectedTeamId),
+    [stocks, selectedTeamId]
+  );
+
+  // Cosmetic metadata (color/name fallback) still comes from IPL_TEAMS,
+  // matched by symbol/short code rather than id — real data drives id/short/name.
+  const teamMeta = IPL_TEAMS.find((t) => t.short === selectedStock?.symbol) || IPL_TEAMS[2];
+  const selectedTeam = selectedStock
+    ? {
+        ...teamMeta,
+        short: selectedStock.symbol || teamMeta.short,
+        name: selectedStock.title || teamMeta.name,
+      }
+    : teamMeta;
+
+  const seedFor = (id) => (id || "").split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 97 + 50;
   const [seriesByTeam, setSeriesByTeam] = useState(() => {
     const map = {};
     IPL_TEAMS.forEach((t) => { map[t.id] = generateSeries(50 + (seedFor(t.id) % 30), 60, seedFor(t.id)); });
     return map;
   });
 
-  // live tick: every team's series grows a little each cycle, so the
-  // watchlist and the active chart both feel live
+  // live tick: every mock team's series grows a little each cycle
   useEffect(() => {
     const iv = setInterval(() => {
       setSeriesByTeam((prev) => {
@@ -1163,7 +1194,9 @@ export default function CrixchangeTradingTerminal() {
     return () => clearInterval(iv);
   }, []);
 
-  const ballData = seriesByTeam[selectedTeamId] || [];
+  // chart series is keyed by mock team id (teamMeta.id), since the
+  // candlestick engine is still simulated from IPL_TEAMS
+  const ballData = seriesByTeam[teamMeta.id] || [];
 
   const [interval_, setInterval_] = useState("1m");
   const [chartType, setChartType] = useState("candlestick");
@@ -1179,17 +1212,21 @@ export default function CrixchangeTradingTerminal() {
   const dayLow = ballData.length ? Math.min(...ballData.map((d) => d.low)) : 0;
   const dayVol = ballData.reduce((s, d) => s + d.volume, 0);
 
+  // teamStats keyed by REAL stock id so TeamListPanel's lookups (which use
+  // the real id) actually resolve. Falls back to the mock series price via symbol match.
   const teamStats = useMemo(() => {
     const map = {};
-    IPL_TEAMS.forEach((t) => {
-      const s = seriesByTeam[t.id];
-      if (!s || !s.length) { map[t.id] = { price: 0, changePct: 0 }; return; }
-      const last = s[s.length - 1].close;
-      const f = s[0].open;
-      map[t.id] = { price: last, changePct: f ? ((last - f) / f) * 100 : 0 };
+    (stocks || []).forEach((s) => {
+      const id = getId(s);
+      const meta = IPL_TEAMS.find((t) => t.short === s.symbol);
+      const series = meta ? seriesByTeam[meta.id] : null;
+      if (!series || !series.length) { map[id] = { price: s.price ?? 0, changePct: s.changePercent ?? 0 }; return; }
+      const last = series[series.length - 1].close;
+      const f = series[0].open;
+      map[id] = { price: last, changePct: f ? ((last - f) / f) * 100 : 0 };
     });
     return map;
-  }, [seriesByTeam]);
+  }, [seriesByTeam, stocks]);
 
   const [viewMode, setViewMode] = useState("split");
   const [orderMode, setOrderMode] = useState("limit");
@@ -1225,7 +1262,7 @@ export default function CrixchangeTradingTerminal() {
   const toggleFav = (id) => setFavorites((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const placeOrder = async (side) => {
-    console.log("Placing order:", side, orderMode, buyQty, sellQty, buyPrice, sellPrice);
+    if (!selectedTeam || !user) return;
     const formData = {
       side: side.toUpperCase(),
       type: orderMode.toUpperCase(),
@@ -1244,7 +1281,6 @@ export default function CrixchangeTradingTerminal() {
     };
     try {
       setPendingSide(side);
-      console.log("Dispatching orderPlace with formData:", formData);
       const result = await dispatch(orderPlace(formData));
       const data = result.payload;
 
@@ -1259,13 +1295,6 @@ export default function CrixchangeTradingTerminal() {
     } finally {
       setPendingSide(null);
     }
-
-
-
-
-    // setMyTrades((prev) => [{ id: `mine-${Date.now()}`, time: `Ov ${current.time.toFixed(1)}`, price, qty, up: side === "buy" }, ...prev].slice(0, 30));
-    // setToast(`${orderMode === "market" ? "Market" : "Limit"} ${side.toUpperCase()} order pllllllllaced — ${qty} ${selectedTeam.short} @ ₹${price.toFixed(2)}`);
-    // setTimeout(() => setToast(null), 2500);
   };
 
   const chartRef = useRef(null);

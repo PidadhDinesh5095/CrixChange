@@ -1,6 +1,6 @@
 import Stock from '../models/Stock.js';
 
-const STOCK_STATS = new Map();
+ const STOCK_STATS = new Map();
 
 /**
  * 1. SEED — load DB into memory, and store a snapshot of what's
@@ -57,7 +57,6 @@ function updateStockStats(stockId, tradePrice, tradeQty) {
   stats.volume += tradeQty;
   stats.change = stats.price - stats.open;
   stats.changePercent = stats.open ? (stats.change / stats.open) * 100 : 0;
-console.log('stock',stockId,stats.price ,stats.high,stats.low,stats.volume,stats.change);
   return stats;
 }
 
