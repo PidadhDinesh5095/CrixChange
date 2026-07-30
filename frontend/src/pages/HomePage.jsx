@@ -1,0 +1,633 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useDispatch, useSelector } from 'react-redux';
+import { getMatches } from '../store/slices/currentMatchSlice';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import {
+  TrendingUp,
+  TrendingDown,
+  Shield,
+  Zap,
+  Users,
+  ChevronRight,
+  BarChart3,
+  Activity,
+  Clock,
+  ArrowUpRight,
+  Play,
+  Dot,
+  Building2,
+  Globe,
+  Award,
+  DotIcon
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+// ─── Cache constants ──────────────────────────────────────────────────────────
+const CACHE_KEY = 'ipl_matches';
+const CACHE_TIME_KEY = 'ipl_matches_time';
+const CACHE_STATUS_KEY = 'ipl_matches_status'; // snapshot: { [matchId]: status }
+
+// ─── Adaptive TTL ─────────────────────────────────────────────────────────────
+// Reads raw matches from the API (before transform) and returns the right expiry
+// window based on which match is most time-sensitive right now.
+//
+// Phase table:
+//   Live match in list          →  15 seconds
+//   Any match starting ≤ 30 min →  60 seconds
+//   All matches > 30 min away   →  30 minutes
+const getAdaptiveTTL = (rawMatches = []) => {
+  const now = Date.now();
+
+  // If any match is currently live, use the tightest TTL
+  const hasLive = rawMatches.some(
+    (m) => m.status?.toLowerCase() === 'in progress'
+  );
+  if (hasLive) return 15 * 1000; // 15 sec
+
+  // Check how close the nearest upcoming match is
+  const msToNearest = rawMatches.reduce((min, m) => {
+    try {
+      const start = new Date(`${m.date} ${m.time}`).getTime();
+      if (isNaN(start)) return min;
+      const diff = start - now;
+      // Only consider future matches (diff > 0)
+      return diff > 0 && diff < min ? diff : min;
+    } catch {
+      return min;
+    }
+  }, Infinity);
+
+  if (msToNearest <= 30 * 60 * 1000) return 60 * 1000;  // within 30 min → 60 sec
+  return 30 * 60 * 1000;                                 // far away → 30 min
+};
+
+// ─── Status snapshot helpers ──────────────────────────────────────────────────
+// We store { [matchId]: status } in localStorage so we can detect status changes
+// without the server needing to push webhooks. On every background fetch we diff
+// the new response against this snapshot. If anything changed we invalidate and
+// re-render; if nothing changed we only refresh the TTL.
+
+const saveStatusSnapshot = (rawMatches = []) => {
+  const snapshot = {};
+  rawMatches.forEach((m) => { snapshot[m.id] = m.status; });
+  localStorage.setItem(CACHE_STATUS_KEY, JSON.stringify(snapshot));
+};
+
+const hasStatusChanged = (freshMatches = []) => {
+  try {
+    const raw = localStorage.getItem(CACHE_STATUS_KEY);
+    if (!raw) return true; // no snapshot yet → treat as changed so we write one
+    const prev = JSON.parse(raw);
+    return freshMatches.some((m) => prev[m.id] !== m.status);
+  } catch {
+    return true;
+  }
+};
+
+
+
+const HomePage = () => {
+  const { isLoading, selectedMatch, error } = useSelector((state) => state.currentMatch);
+  const dispatch = useDispatch();
+  const [liveMatches, setLiveMatches] = useState([]);
+
+  const tickerData = [
+    { team: 'MI', price: 125.50, change: 2.5 },
+    { team: 'CSK', price: 142.75, change: -1.8 },
+    { team: 'RCB', price: 98.25, change: 5.2 },
+    { team: 'DC', price: 118.90, change: -3.1 },
+    { team: 'GT', price: 156.75, change: 4.8 },
+    { team: 'RR', price: 134.20, change: -2.3 },
+    { team: 'KKR', price: 112.45, change: 1.7 },
+    { team: 'PBKS', price: 89.60, change: -4.2 },
+  ];
+
+  const matchImages = {
+    "CSK_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4891/1742673084891-i",
+    "CSK_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "CSK_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "CSK_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "CSK_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "CSK_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "CSK_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
+    "CSK_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "CSK_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
+
+    "MI_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6368/1742488016368-i",
+    "MI_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    "MI_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "MI_vs_SRH": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "MI_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "MI_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "MI_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
+    "MI_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "MI_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+
+    "RCB_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/99/1743083440099-i",
+    "RCB_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7816/1775903447816-i",
+    "RCB_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    "RCB_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "RCB_vs_DC": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "RCB_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RCB_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
+    "RCB_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "RCB_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+
+    "KKR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9167/1744282189167-i",
+    "KKR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7716/1743347067716-i",
+    "KKR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1834/1742497751834-i",
+    "KKR_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr0nvynAcabDcOrKXyKz95TeJzfln2eI6U5w&s",
+    "KKR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "KKR_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "KKR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
+    "KKR_vs_GT": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "KKR_vs_LSG": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+
+    "SRH_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8203/1776399038203-i",
+    "SRH_vs_MI": "https://www.mumbaiindians.com/static-assets/waf-images/a2/49/24/0/article-5784-sunrisers-vs-mi1.png",
+    "SRH_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7607/1747928747607-i",
+    "SRH_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8284/1743605638284-i",
+    "SRH_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2803/1776584212803-i",
+    "SRH_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9355/1776029099355-i",
+    "SRH_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
+    "SRH_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4309/1743868234309-i",
+    "SRH_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+
+    "DC_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3194/1743780583194-i",
+    "DC_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9592/1747748149592-i",
+    "DC_vs_RCB": "https://sportsmintmedia.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-16-at-11.32.57-AM.jpeg",
+    "DC_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2572/1745843292572-i",
+    "DC_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2216/1743263092216-i",
+    "DC_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
+    "DC_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
+    "DC_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "DC_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+
+    "RR_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5655/1743263315655-i",
+    "RR_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1271/1746014051271-i",
+    "RR_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3113/1745423283113-i",
+    "RR_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1515/1742913691515-i",
+    "RR_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8157/1742577728157-i",
+    "RR_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9704/1744722199704-i",
+    "RR_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
+    "RR_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "RR_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+
+    "PBKS_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7455/1745924577455-i",
+    "PBKS_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7378/1748175907378-i",
+    "PBKS_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4495/1744903294495-i",
+    "PBKS_vs_KKR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/485/1744644510485-i",
+    "PBKS_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9819/1744385209819-i",
+    "PBKS_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/5911/1746627225911-i",
+    "PBKS_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1002/1747507771002-i",
+    "PBKS_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
+    "PBKS_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
+
+    "GT_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2714/1748082122714-i",
+    "GT_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1167/1743175411167-i",
+    "GT_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2357/1743520252357-i",
+    "GT_vs_KKR": "https://newstapone.com/wp-content/uploads/2026/04/img_0966-1024x576.jpg",
+    "GT_vs_SRH": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9FELbajMb2GvuRFzICyemj4Pnro6iFjLiXw&s",
+    "GT_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6826/1744990206826-i",
+    "GT_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/8196/1744131028196-i",
+    "GT_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1923/1742827021923-i",
+    "GT_vs_LSG": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+
+    "LSG_vs_CSK": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/6873/1744556376873-i",
+    "LSG_vs_MI": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/9545/1743692969545-i",
+    "LSG_vs_RCB": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4936/1748259554936-i",
+    "LSG_vs_KKR": "https://sportsmintmedia.com/wp-content/uploads/2025/04/KKR-vs-LSG-1200x675.jpg",
+    "LSG_vs_SRH": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/7298/1743002907298-i",
+    "LSG_vs_DC": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/2215/1742753472215-i",
+    "LSG_vs_RR": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/1863/1744990351863-i",
+    "LSG_vs_PBKS": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/4166/1743421634166-i",
+    "LSG_vs_GT": "https://img1.hotstarext.com/image/upload/f_auto/sources/r1/cms/prod/3705/1744385043705-i",
+  };
+
+  const convertToTodayDate = (timeStr) => {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+
+    if (modifier.toLowerCase() === 'pm' && hours !== '12') {
+      hours = parseInt(hours) + 12;
+    }
+    if (modifier.toLowerCase() === 'am' && hours === '12') {
+      hours = '00';
+    }
+
+    const now = new Date();
+    const matchDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      hours,
+      minutes
+    );
+
+    return matchDate;
+  };
+
+  // Transform raw API matches → UI shape (unchanged from your original)
+  const transformMatches = (matchesData) => {
+
+    return matchesData?.map((m) => {
+      const key = `${m.team1}_vs_${m.team2}`;
+      return {
+        id: m.id,
+        title: m.match || `${m.team1} vs ${m.team2}`,
+        status: m.status || 'UPCOMING',
+        image: matchImages[key] ||
+          'https://akm-img-a-in.tosshub.com/indiatoday/images/story/202311/ipl-trophyjpeg-310330-16x9.jpeg?VersionId=Gk8RUADOTtcmYUr8qTymwrDlFiRZP8mK&size=690:388',
+        teams: [
+          { name: m.team1, price: m.team1Price || 0, change: m.team1Change || 0, volume: m.team1Volume || 0 },
+          { name: m.team2, price: m.team2Price || 0, change: m.team2Change || 0, volume: m.team2Volume || 0 },
+        ],
+        date: m.date,
+        time: m.time,
+        venue: m.venue,
+        ground: m.ground,
+        totalVolume: (m.team1Volume || 0) + (m.team2Volume || 0),
+      };
+    }) || [];
+  };
+
+  const currentMatch = (() => {
+    if (!liveMatches || liveMatches.length === 0) return null;
+    if (liveMatches.length === 1) return liveMatches[0];
+    return [...liveMatches].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`);
+      const dateB = new Date(`${b.date} ${b.time}`);
+      return dateA - dateB;
+    })[0];
+  })();
+
+  const upcomingMatches = (() => {
+    if (liveMatches && liveMatches.length > 1) {
+      const sorted = [...liveMatches].sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateA - dateB;
+      });
+      return sorted.slice(1, 4);
+    }
+    const upcomingFromLive = (liveMatches || []).filter((m) => m.status === 'UPCOMING');
+    if (upcomingFromLive.length > 0) {
+      return upcomingFromLive
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date} ${a.time}`);
+          const dateB = new Date(`${b.date} ${b.time}`);
+          return dateA - dateB;
+        })
+        .slice(0, 3);
+    }
+    return [];
+  })();
+
+  // ─── Main data effect: adaptive TTL cache + SSE invalidation ─────────────
+  useEffect(() => {
+    // let sseClient = null;
+
+    // ── Fetch from server (Redux) and write to localStorage ──────────────
+    // forceRefresh = true  →  skip TTL check, always call the API
+    // forceRefresh = false →  honour the adaptive TTL
+    const loadAndSetMatches = async (forceRefresh = false) => {
+      if (!forceRefresh) {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+
+        if (cachedData && cachedTime) {
+
+          const matchesData = JSON.parse(cachedData);
+          const ttl = getAdaptiveTTL(matchesData);   // ← adaptive, not fixed
+
+          const isExpired = Date.now() - Number(cachedTime) > ttl;
+
+
+          if (!isExpired) {
+
+            setLiveMatches(transformMatches(matchesData));
+            return;
+          }
+        }
+      }
+
+
+      try {
+        const result = await dispatch(getMatches());
+
+        if (getMatches.fulfilled.match(result)) {
+          const matchesData = result.payload?.matches || [];
+
+          setLiveMatches(transformMatches(matchesData));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(matchesData));
+          localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        }
+      } catch (err) {
+        console.error('Error fetching matches:', err);
+      }
+    };
+
+    // // ── SSE: subscribe to match update events from the server ────────────
+    // // Your backend should emit a 'match:updated' event whenever the diff
+    // // detector sees a status change (see the server-side implementation).
+    // // ⚠️  Adjust the URL to match your backend route.
+    // const connectSSE = () => {
+    //   sseClient = new EventSource('/api/events?channel=matches');
+
+    //   sseClient.addEventListener('match:updated', () => {
+    //     // Server detected a status change → evict the stale cache
+    //     // and immediately re-fetch so the UI reflects the new state.
+    //     console.log('[SSE] Status change received — invalidating cache');
+    //     localStorage.removeItem(CACHE_KEY);
+    //     localStorage.removeItem(CACHE_TIME_KEY);
+    //     loadAndSetMatches(true); // forceRefresh bypasses TTL check
+    //   });
+
+    //   sseClient.onerror = () => {
+    //     // EventSource auto-retries after ~3 s by default.
+    //     // Close the current instance to avoid duplicate listeners
+    //     // and let the browser open a fresh connection automatically.
+    //     console.warn('[SSE] Connection error — browser will retry');
+    //     sseClient.close();
+    //   };
+    // };
+
+    // ── Boot: load data immediately, then open SSE channel ───────────────
+    //loadAndSetMatches();
+    // connectSSE();
+
+    // ── Cleanup: close SSE when the component unmounts ───────────────────
+    // return () => {
+    //   if (sseClient) {
+    //     sseClient.close();
+    //     console.log('[SSE] Connection closed');
+    //   }
+    // };
+  }, [dispatch]);
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const stats = [
+    { value: '₹500Cr+', label: 'DAILY VOLUME', icon: BarChart3 },
+    { value: '50K+', label: 'ACTIVE TRADERS', icon: Users },
+    { value: '99.99%', label: 'UPTIME', icon: Shield },
+    { value: '<0.1ms', label: 'LATENCY', icon: Zap },
+  ];
+
+  const features = [
+    {
+      icon: TrendingUp,
+      title: 'REAL-TIME EXECUTION',
+      description: 'Sub-millisecond order execution with institutional-grade infrastructure and direct market access.',
+    },
+    {
+      icon: Shield,
+      title: 'REGULATORY COMPLIANCE',
+      description: 'Full SEBI compliance with KYC/AML verification and comprehensive audit trails.',
+    },
+    {
+      icon: Zap,
+      title: 'ULTRA-LOW LATENCY',
+      description: 'Co-located servers with optimized networking for professional trading performance.',
+    },
+    {
+      icon: Building2,
+      title: 'INSTITUTIONAL GRADE',
+      description: 'Enterprise-level security, redundancy, and scalability for serious investors.',
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="animate-pulse text-5xl font-bold text-black dark:text-white">
+          Crixchange
+          <span className="text-red-500 ml-[0.5] font-bold">.</span>
+        </h1>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-white dark:bg-black font-raleway ">
+
+      <section className="relative w-full  bg-white dark:bg-black">
+        <div
+          className="w-full flex flex-row items-end justify-start mx-auto h-screen px-4 bg-top bg-cover sm:px-6 lg:px-8 pb-28"
+          style={{
+            backgroundImage: `url(${currentMatch?.image ||
+              'https://currentaffairs.adda247.com/wp-content/uploads/multisite/sites/5/2025/06/27134043/IPL-Winners-List-from-2008-to-2026-New-Winner-and-Runner-up-Team.webp'
+              })`,
+          }}
+        >
+          <div className="pointer-events-none absolute top-0 left-0 h-full w-[100%] z-5 bg-gradient-to-r from-black to-transparent" />
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-row items-end justify-between z-20 w-full"
+          >
+            {/* LEFT: Current Match */}
+            <div className="flex flex-col items-center justify-end w-[40%] rounded-sm">
+              <div className="flex flex-col gap-6 items-center ">
+                <div className="text-6xl md:text-[6rem] font-black text-white tracking-tighter leading-none">
+                  {currentMatch ? (
+                    <>
+                      {currentMatch.teams[0].name}
+                      <span className="text-orange-500 ml-1"> vs </span>
+                      {currentMatch.teams[1].name}
+                    </>
+                  ) : 'No Match'}
+                </div>
+                <p className="text-xl md:text-2xl text-white mb-12 max-w-xl font-light">
+                  {
+                    currentMatch
+                      ? currentMatch.status === 'In Progress'
+                        ? 'Start trading now - match is live!'
+                        : currentMatch.status === 'Preview'
+                          ? `Match starts at ${currentMatch.time}`
+                          : currentMatch.status
+                      : 'No matches available'
+                  }
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                {
+                  currentMatch ? (
+                    currentMatch.status === 'Preview' ? (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                      >
+                        STARTS AT {currentMatch.time || '--'}
+                      </button>
+                    ) : currentMatch.status === 'In Progress' ? (
+                      <Link
+                        to="/trading"
+                        className="inline-flex items-center px-8 py-4 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold rounded-sm transition-colors"
+                      >
+                        START TRADING
+                        <ChevronRight className="ml-2 w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                      >
+                        {currentMatch.status}
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="inline-flex items-center px-8 py-4 bg-gray-500 text-white font-semibold rounded-sm cursor-not-allowed"
+                    >
+                      No matches available
+                    </button>
+                  )
+                }
+                <Link
+                  to="/analytics"
+                  className="inline-flex items-center px-8 py-4 bg-white dark:bg-black text-black dark:text-white font-semibold rounded-sm border hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                >
+                  VIEW ANALYTICS
+                </Link>
+              </div>
+            </div>
+
+            {/* RIGHT: Upcoming Matches */}
+            {upcomingMatches && upcomingMatches.length > 0 && (
+              <div className="flex flex-row gap-4 px-4 w-[50%] justify-end no-scrollbar scroll-smooth">
+                {upcomingMatches.map((m) => (
+                  <div
+                    key={m.id}
+                    className="relative min-w-[175px] h-[100px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition flex-shrink-0"
+                  >
+                    <img
+                      src={m.image || 'https://static.toiimg.com/thumb/msid-78076709,width-400,resizemode-4/78076709.jpg'}
+                      alt={m.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 w-full h-[50%] p-2 bg-gradient-to-t from-black/100 to-transparent text-white">
+                      <p className="text-sm font-semibold">
+                        {m.teams[0].name} vs {m.teams[1].name}
+                      </p>
+                      <p className="text-xs opacity-80">
+                        {m.date} • {m.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {liveMatches.length > 0 && (
+            <section className="py-20 bg-white dark:bg-black border-t border-gray-200 dark:border-white">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  viewport={{ once: true }}
+                  className="text-center mb-16"
+                >
+                  <h2 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-4 tracking-tight">
+                    LIVE MARKETS
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-light">
+                    Real-time price discovery with institutional-grade market infrastructure
+                  </p>
+                </motion.div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {liveMatches.map((match, index) => (
+                    <motion.div
+                      key={match.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-sm p-6 hover:shadow-card transition-shadow"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-black dark:text-white">{match.title}</h3>
+                        <span className="inline-flex items-center px-3 py-1 rounded-sm text-md font-bold text-black dark:text-white">
+                          {match.status === 'In Progress' || new Date(match.time) <= new Date() ? (
+                            <><Dot className="w-10 h-10 animate-pulse text-red-500" />Live</>
+                          ) : (
+                            `Starts at ${match.time}`
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{match.date}</span>
+                        <span>{match.time}</span>
+                        <span>{match.venue}</span>
+                        <span>{match.ground}</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        {match.teams.map((team, teamIndex) => (
+                          <div
+                            key={teamIndex}
+                            className="flex items-center justify-between p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-sm"
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-black dark:bg-white rounded-sm flex items-center justify-center">
+                                <span className="text-white dark:text-black font-bold text-sm">{team.name}</span>
+                              </div>
+                              <div>
+                                <p className="font-bold text-black dark:text-white">{team.name}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  VOL: {team.volume?.toLocaleString?.() || team.volume}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-black dark:text-white">
+                                ₹{Number(team.price).toFixed(2)}
+                              </p>
+                              <p className={`text-sm font-bold ${team.change >= 0 ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {team.change >= 0 ? '+' : ''}{Number(team.change).toFixed(1)}%
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Link
+                        to={`/match-performance/${match.id}`}
+                        className="mt-6 w-full inline-flex items-center justify-center px-4 py-3 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-bold rounded-sm transition-colors"
+                      >
+                        VIEW PERFORMANCE
+                        <ArrowUpRight className="ml-2 w-4 h-4" />
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          <div className="pointer-events-none absolute bottom-0 left-0 w-full h-[50%] z-10 bg-gradient-to-t from-black to-transparent" />
+        </div>
+      </section>
+
+      {/* Live Trading Terminal Preview */}
+
+
+      {/* Live Markets */}
+
+
+      {/* Features */}
+
+    </div>
+  );
+};
+
+export default HomePage;
