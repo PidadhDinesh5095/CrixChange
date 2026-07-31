@@ -340,13 +340,13 @@ export const forgotPassword = async (req, res) => {
 
   try {
 
-    await sendPasswordResetEmail(user.email,user.firstName,  resetUrl );
+    
     res.json({
       success: true,
       message: 'Password reset email sent'
     });
 
-    //await publishEvent(EVENT_TYPES.PASSWORD_RESET_REQUESTED, user._id.toString(), { email: user.email, name: user.firstName, resetUrl: resetUrl });
+    await publishEvent(EVENT_TYPES.PASSWORD_RESET_REQUESTED, user._id.toString(), { email: user.email, name: user.firstName, resetUrl: resetUrl });
   } catch (error) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
