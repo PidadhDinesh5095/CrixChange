@@ -2686,7 +2686,7 @@ export const sendEmailVerificationSuccessEmail = async (email, kycUrl) => {
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, name, resetUrl) => {
-   console.log(`Sending password reset email to ${email} for ${name} with reset URL: ${resetUrl}`);
+   
   await sendEmail({
     email,
     subject: 'Password Reset Request - CrixChange',

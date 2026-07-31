@@ -1,19 +1,16 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-let transporter;
+let resend;
 
 export const connectMailServer = () => {
   try {
-    transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not set");
+    }
+    resend = new Resend(process.env.RESEND_API_KEY);
 
     console.log("✅ Mail server connected");
   } catch (error) {
@@ -23,21 +20,24 @@ export const connectMailServer = () => {
 };
 
 export const sendEmail = async ({ email, subject, message }) => {
-  if (!transporter) {
+  if (!resend) {
     throw new Error("Mail server not connected");
   }
   try {
-    const info = await transporter.sendMail({
-      from: `"CrixChange" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || "noreply <onboarding@resend.dev>",
       to: email,
       subject,
       html: message
     });
 
-    return info;
+    if (error) {
+      throw new Error(error.message || "Failed to send email via Resend");
+    }
+
+    return data;
   } catch (error) {
     console.error("❌ Error sending email:", error);
     throw error;
   }
-
 };
