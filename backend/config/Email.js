@@ -5,14 +5,14 @@ dotenv.config();
 
 let transporter;
 
-export const connectMailServer =  () => {
+export const connectMailServer = () => {
   try {
     transporter = nodemailer.createTransport({
-     service: process.env.EMAIL_SERVICE,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
+      service: process.env.EMAIL_SERVICE,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
     });
 
     console.log("✅ Mail server connected");
@@ -26,13 +26,18 @@ export const sendEmail = async ({ email, subject, message }) => {
   if (!transporter) {
     throw new Error("Mail server not connected");
   }
+  try {
+    const info = await transporter.sendMail({
+      from: `"CrixChange" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject,
+      html: message
+    });
 
-  const info = await transporter.sendMail({
-    from: `"CrixChange" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject,
-    html: message
-  });
+    return info;
+  } catch (error) {
+    console.error("❌ Error sending email:", error);
+    throw error;
+  }
 
-  return info;
 };

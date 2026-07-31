@@ -218,7 +218,7 @@ export const emailTemplates = {
       </p>
 
       <div class="button-wrap">
-        <a href="${process.env.FRONTEND_URL}/profile" class="button">
+        <a href="${process.env.FRONTEND_URL}/dashboard" class="button">
           Get Started
         </a>
       </div>
@@ -2686,6 +2686,7 @@ export const sendEmailVerificationSuccessEmail = async (email, kycUrl) => {
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, name, resetUrl) => {
+   console.log(`Sending password reset email to ${email} for ${name} with reset URL: ${resetUrl}`);
   await sendEmail({
     email,
     subject: 'Password Reset Request - CrixChange',
