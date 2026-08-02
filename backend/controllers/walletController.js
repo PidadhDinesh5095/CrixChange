@@ -74,7 +74,7 @@ export const depositFunds = async (req, res) => {
 };
 
 export const verifyPayment = async (req, res) => {
-  console.log('Verifying payment with data:', req.body); // Debug log
+ 
   try {
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature, user,amount } = req.body;
 

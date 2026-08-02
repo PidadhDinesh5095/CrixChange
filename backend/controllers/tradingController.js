@@ -1,4 +1,3 @@
-
 import Order from '../models/Order.js'
 import wallet from '../models/Wallet.js'
 import Stock from '../models/Stock.js'
@@ -13,9 +12,7 @@ import { io } from '../server.js'
 import { STOCK_STATS } from '../utils/stockStatService.js'
 import CompanyWallet from '../models/CompanyWallet.js'
 import { publishEvent, EVENT_TYPES } from '../kafka/index.js';
-
-
-
+import { CompensationStack, enqueueForStock } from '../utils/compensation.js'
 
 
 const INR = 'INR'
@@ -151,6 +148,17 @@ async function collectCommission(amount, description) {
 }
 
 
+async function reverseCommission(amount, description) {
+  if (amount <= 0) return
+  const companyWallet = await ensureCompanyWallet(INR)
+  if (typeof companyWallet.debit === 'function') {
+    await companyWallet.debit(amount, description)
+  } else {
+    console.error('CompanyWallet has no debit() method — commission rollback skipped for:', description)
+  }
+}
+
+
 function getDepth(id) {
   const symbol = SYMBOL_BY_STOCK_ID.get(String(id));
   const normalized = symbol.toUpperCase()
@@ -257,6 +265,7 @@ export const getDepthBySymbol = async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch order book depth' });
   }
 };
+
 // Buyer's side of a fill: the wallet funds were already frozen (either
 // upfront via lockBuyFunds for LIMIT, or right before this call via
 // freezeAmount for MARKET — see marketOrderExecution). This call finalizes
@@ -278,6 +287,27 @@ async function settleBuyerFill(userId, stockId, amount, qty) {
 
   const stockBal = await ensureStockBalance(userId, stockId)
   stockBal.total += qty // buyer now owns this quantity outright
+  await stockBal.save()
+}
+
+// Inverse of settleBuyerFill — used only during rollback. Re-freezes the
+// amount, strips the credited stock qty back off, and refunds the
+// commission that was deducted from the buyer's balance (and reverses it
+// out of the company wallet).
+async function undoSettleBuyerFill(userId, stockId, amount, qty) {
+  const userwallet = await wallet.findOne({ userId })
+  const buyerCommission = Number((amount * COMMISSION_RATE).toFixed(2))
+
+  if (buyerCommission > 0) {
+    userwallet.balance += buyerCommission
+    await userwallet.save()
+    await reverseCommission(buyerCommission, `Rollback: buyer commission reversed for stock ${stockId}`)
+  }
+
+  await userwallet.freezeAmount(amount)
+
+  const stockBal = await ensureStockBalance(userId, stockId)
+  stockBal.total -= qty
   await stockBal.save()
 }
 
@@ -305,12 +335,35 @@ async function settleSellerFill(userId, stockId, amount, qty) {
   }
 }
 
+// Inverse of settleSellerFill — used only during rollback. Restores the
+// locked stock qty, claws back the net amount credited to the seller, and
+// reverses the commission routed to the company wallet.
+async function undoSettleSellerFill(userId, stockId, amount, qty) {
+  const stockBal = await StockBalance.findOne({ userId, stockId })
+  stockBal.locked += qty
+  await stockBal.save()
 
-async function limitOrderExecution(userId, side, stockId, price, qty) {
+  const sellerCommission = Number((amount * COMMISSION_RATE).toFixed(2))
+  const netAmount = Number((amount - sellerCommission).toFixed(2))
+
+  const userwallet = await wallet.findOne({ userId })
+  userwallet.balance -= netAmount
+  await userwallet.save()
+
+  if (sellerCommission > 0) {
+    await reverseCommission(sellerCommission, `Rollback: seller commission reversed for stock ${stockId}`)
+  }
+}
+
+
+
+
+async function limitOrderExecution(userId, side, stockId, price, qty, compensation, pendingEvents) {
   const opposingSide = side === 'BUY' ? 'SELL' : 'BUY'
   if (qty <= 0) return
   const symbol = SYMBOL_BY_STOCK_ID.get(String(stockId))
-  if (!symbol) return
+  if (!symbol) throw new Error('Unknown stock symbol for this stockId')
+
   const book = ensureBook(symbol)
   const sideMap = getSideMap(book, opposingSide)
   const level = sideMap.get(price)
@@ -321,15 +374,25 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
       userId, side, orderType: 'LIMIT', stockId, price,
       quantity: qty, filledQuantity: 0, status: 'OPEN'
     })
-    addOrderToBook(incomingOrder)
+    compensation.push('create incoming order (resting)', async () => {
+      await Order.deleteOne({ _id: incomingOrder._id })
+    })
 
-    return { filledQty: 0, remainingQty: qty, orderId: incomingOrder._id }
+    addOrderToBook(incomingOrder)
+    compensation.push('addOrderToBook (resting)', async () => {
+      removeOrderFromBook(incomingOrder)
+    })
+
+    return { filledQty: 0, remainingQty: qty, orderId: incomingOrder._id, order: incomingOrder }
   }
-  const user=await User.findById(userId)
+  const user = await User.findById(userId)
   // Create the incoming order UP FRONT so fills have a valid orderId to reference
   const incomingOrder = await Order.create({
     userId, side, orderType: 'LIMIT', stockId, price,
     quantity: qty, filledQuantity: 0, status: 'OPEN'
+  })
+  compensation.push('create incoming order', async () => {
+    await Order.deleteOne({ _id: incomingOrder._id })
   })
 
   let remaining = qty
@@ -341,8 +404,7 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
     if (restingRemaining <= 0) continue
 
     // Self-trade prevention: never match against your own resting order.
-    // Skip it and keep walking the price level so it can still match
-    // against a different counterparty; your own order just keeps resting.
+  
     if (String(resting.userId) === String(userId)) continue
 
     const fillQty = Math.min(remaining, restingRemaining)
@@ -351,11 +413,32 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
     const oppositeOrder = await Order.findById(resting.orderId)
     if (!oppositeOrder) continue
 
+    const prevFilledQty = oppositeOrder.filledQuantity
+    const prevStatus = oppositeOrder.status
     oppositeOrder.filledQuantity += fillQty
     oppositeOrder.status = oppositeOrder.filledQuantity >= oppositeOrder.quantity ? 'CLOSED' : 'OPEN'
     await oppositeOrder.save()
+    compensation.push(`revert opposite order ${oppositeOrder._id}`, async () => {
+      await Order.updateOne(
+        { _id: oppositeOrder._id },
+        { $set: { filledQuantity: prevFilledQty, status: prevStatus } }
+      )
+    })
 
     reduceOrderFromBook({ price, side: opposingSide, id: resting.orderId, stockId }, fillQty)
+    compensation.push(`re-add reduced book qty for ${resting.orderId}`, async () => {
+      // Inverse of reduceOrderFromBook. Safe to hand-reverse because this
+      // stock's queue slot guarantees nothing else has touched the book
+      // since we reduced it.
+      const restoreBook = ensureBook(symbol)
+      const restoreSideMap = getSideMap(restoreBook, opposingSide)
+      const restoreLevel = restoreSideMap.get(price) ?? { totalQty: 0, orders: [] }
+      restoreLevel.totalQty += fillQty
+      const existingEntry = restoreLevel.orders.find(o => o.orderId === String(resting.orderId))
+      if (existingEntry) existingEntry.filledQty -= fillQty
+      else restoreLevel.orders.push({ ...resting })
+      restoreSideMap.set(price, restoreLevel)
+    })
 
     const buyerUserId = side === 'BUY' ? userId : resting.userId
     const sellerUserId = side === 'BUY' ? resting.userId : userId
@@ -363,7 +446,14 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
     const sellOrderId = side === 'BUY' ? resting.orderId : incomingOrder._id
 
     await settleBuyerFill(buyerUserId, stockId, amount, fillQty)
+    compensation.push(`undo settleBuyerFill for ${buyerUserId}`, async () => {
+      await undoSettleBuyerFill(buyerUserId, stockId, amount, fillQty)
+    })
+
     await settleSellerFill(sellerUserId, stockId, amount, fillQty)
+    compensation.push(`undo settleSellerFill for ${sellerUserId}`, async () => {
+      await undoSettleSellerFill(sellerUserId, stockId, amount, fillQty)
+    })
 
     // Record the fill — one row per matched trade
     const prevPrice = STOCK_STATS.get(stockId.toString())?.price;
@@ -375,44 +465,75 @@ async function limitOrderExecution(userId, side, stockId, price, qty) {
       buyOrderId,
       sellOrderId
     });
+    compensation.push(`delete fill ${newFill._id}`, async () => {
+      await Fill.deleteOne({ _id: newFill._id })
+    })
 
     const up = prevPrice !== undefined ? price >= prevPrice : true;
 
-    const data = {
-      stockId,
-      userId,
-      data: {
-        price,
-        qty: fillQty,
-        time: newFill.createdAt.toISOString(),
-        up
-      }
-    };
-    io.emit('trade', data);
-    const oppositeUser=await User.findById(resting.userId)
-    const oppSide=side==='BUY'?'SELL':'BUY'
-    await publishEvent(EVENT_TYPES.TRADE_EXECUTED, oppositeUser._id, { email: oppositeUser.email, name: oppositeUser.firstName, tradeDetails:{type:oppSide,team:symbol,quantity:fillQty,price:price,totalAmount:amount} });
+    const oppositeUser = await User.findById(resting.userId)
+    const oppSide = side === 'BUY' ? 'SELL' : 'BUY'
+
+    // Deferred — only fired after the whole order commits (see executeOrder)
+    pendingEvents.push(() => {
+      const data = {
+        stockId,
+        userId,
+        data: {
+          price,
+          qty: fillQty,
+          time: newFill.createdAt.toISOString(),
+          up
+        }
+      };
+      io.emit('trade', data);
+    })
+    pendingEvents.push(() => publishEvent(EVENT_TYPES.TRADE_EXECUTED, oppositeUser._id, { email: oppositeUser.email, name: oppositeUser.firstName, tradeDetails: { type: oppSide, team: symbol, quantity: fillQty, price: price, totalAmount: amount } }))
+
     incomingOrder.filledQuantity += fillQty
+
+    const prevStats = STOCK_STATS.get(stockId.toString())
+      ? { ...STOCK_STATS.get(stockId.toString()) }
+      : null
     updateStockStats(stockId, price, fillQty) // per-fill, so volume accumulates fill-by-fill
+    compensation.push(`revert stock stats for ${stockId}`, async () => {
+      if (prevStats) STOCK_STATS.set(stockId.toString(), prevStats)
+      else STOCK_STATS.delete(stockId.toString())
+    })
 
     remaining -= fillQty
   }
 
   incomingOrder.status = remaining <= 0 ? 'CLOSED' : 'OPEN'
   await incomingOrder.save()
-  await publishEvent(EVENT_TYPES.TRADE_EXECUTED, userId, { email: user.email, name: user.firstName, tradeDetails:{type:side,team:symbol,quantity:qty-remaining,price:price,totalAmount:(qty-remaining)*price} });
+  compensation.push('revert incoming order final state', async () => {
+    // incomingOrder was created fresh in this same transaction, so its
+    // true prior state is 0 filled / OPEN.
+    await Order.updateOne(
+      { _id: incomingOrder._id },
+      { $set: { filledQuantity: 0, status: 'OPEN' } }
+    )
+  })
 
-  if (remaining > 0) addOrderToBook(incomingOrder)
+  pendingEvents.push(() => publishEvent(EVENT_TYPES.TRADE_EXECUTED, userId, { email: user.email, name: user.firstName, tradeDetails: { type: side, team: symbol, quantity: qty - remaining, price: price, totalAmount: (qty - remaining) * price } }))
+
+  if (remaining > 0) {
+    addOrderToBook(incomingOrder)
+    compensation.push('addOrderToBook (remainder resting)', async () => {
+      removeOrderFromBook(incomingOrder)
+    })
+  }
 
   return { filledQty: qty - remaining, remainingQty: remaining, order: incomingOrder }
 }
 
-async function marketOrderExecution(userId, side, stockId, qty) {
+
+async function marketOrderExecution(userId, side, stockId, qty, compensation, pendingEvents) {
   if (qty <= 0) return;
 
   const opposingSide = side === "BUY" ? "SELL" : "BUY";
   const symbol = SYMBOL_BY_STOCK_ID.get(String(stockId));
-  if (!symbol) return;
+  if (!symbol) throw new Error('Unknown stock symbol for this stockId')
 
   const book = ensureBook(symbol);
   const sideMap = getSideMap(book, opposingSide);
@@ -429,6 +550,9 @@ async function marketOrderExecution(userId, side, stockId, qty) {
     filledQuantity: 0,
     status: "OPEN",
   });
+  compensation.push('create incoming market order', async () => {
+    await Order.deleteOne({ _id: incomingOrder._id })
+  })
 
   let remaining = qty;
   let filledQty = 0;
@@ -454,8 +578,7 @@ async function marketOrderExecution(userId, side, stockId, qty) {
       if (restingRemaining <= 0) continue;
 
       // Self-trade prevention: skip your own resting order at this price
-      // level and keep looking for a different counterparty — both here
-      // and at subsequent price levels, since this is inside the outer loop.
+     
       if (String(resting.userId) === String(userId)) continue;
 
       const fillQty = Math.min(remaining, restingRemaining);
@@ -470,11 +593,17 @@ async function marketOrderExecution(userId, side, stockId, qty) {
         }
 
         await buyerWallet.freezeAmount(amount);
+        compensation.push(`unfreeze market buy amount for ${userId}`, async () => {
+          const w = await wallet.findOne({ userId })
+          await w.unfreezeAmount(amount, `Rollback: market buy freeze reversed for stock ${stockId}`)
+        })
       }
 
       const oppositeOrder = await Order.findById(resting.orderId);
       if (!oppositeOrder) continue;
 
+      const prevFilledQty = oppositeOrder.filledQuantity
+      const prevStatus = oppositeOrder.status
       oppositeOrder.filledQuantity += fillQty;
       oppositeOrder.status =
         oppositeOrder.filledQuantity >= oppositeOrder.quantity
@@ -482,11 +611,27 @@ async function marketOrderExecution(userId, side, stockId, qty) {
           : "OPEN";
 
       await oppositeOrder.save();
+      compensation.push(`revert opposite order ${oppositeOrder._id}`, async () => {
+        await Order.updateOne(
+          { _id: oppositeOrder._id },
+          { $set: { filledQuantity: prevFilledQty, status: prevStatus } }
+        )
+      })
 
       reduceOrderFromBook(
         { price, side: opposingSide, id: resting.orderId, stockId },
         fillQty
       );
+      compensation.push(`re-add reduced book qty for ${resting.orderId}`, async () => {
+        const restoreBook = ensureBook(symbol)
+        const restoreSideMap = getSideMap(restoreBook, opposingSide)
+        const restoreLevel = restoreSideMap.get(price) ?? { totalQty: 0, orders: [] }
+        restoreLevel.totalQty += fillQty
+        const existingEntry = restoreLevel.orders.find(o => o.orderId === String(resting.orderId))
+        if (existingEntry) existingEntry.filledQty -= fillQty
+        else restoreLevel.orders.push({ ...resting })
+        restoreSideMap.set(price, restoreLevel)
+      })
 
       const buyerUserId = side === "BUY" ? userId : resting.userId;
       const sellerUserId = side === "BUY" ? resting.userId : userId;
@@ -494,7 +639,14 @@ async function marketOrderExecution(userId, side, stockId, qty) {
       const sellOrderId = side === "BUY" ? resting.orderId : incomingOrder._id;
 
       await settleBuyerFill(buyerUserId, stockId, amount, fillQty);
+      compensation.push(`undo settleBuyerFill for ${buyerUserId}`, async () => {
+        await undoSettleBuyerFill(buyerUserId, stockId, amount, fillQty)
+      })
+
       await settleSellerFill(sellerUserId, stockId, amount, fillQty);
+      compensation.push(`undo settleSellerFill for ${sellerUserId}`, async () => {
+        await undoSettleSellerFill(sellerUserId, stockId, amount, fillQty)
+      })
 
       // One Fill row per matched trade, at that trade's actual price
       const prevPrice = STOCK_STATS.get(stockId.toString())?.price;
@@ -506,24 +658,38 @@ async function marketOrderExecution(userId, side, stockId, qty) {
         buyOrderId,
         sellOrderId
       });
+      compensation.push(`delete fill ${newFill._id}`, async () => {
+        await Fill.deleteOne({ _id: newFill._id })
+      })
 
       const up = prevPrice !== undefined ? price >= prevPrice : true;
 
-      const data = {
-        stockId,
-        userId,
-        data: {
-          price,
-          qty: fillQty,
-          time: newFill.createdAt.toISOString(),
-          up
-        }
-      };
-      io.emit('trade', data);
-      const oppositeUser=await User.findById(resting.userId)
-      await publishEvent(EVENT_TYPES.TRADE_EXECUTED, oppositeUser._id, { email: oppositeUser.email, name: oppositeUser.firstName, tradeDetails:{type:side==='BUY'?'SELL':'BUY',team:symbol,quantity:fillQty,price:price,totalAmount:amount} });
+      const oppositeUser = await User.findById(resting.userId)
+
+      pendingEvents.push(() => {
+        const data = {
+          stockId,
+          userId,
+          data: {
+            price,
+            qty: fillQty,
+            time: newFill.createdAt.toISOString(),
+            up
+          }
+        };
+        io.emit('trade', data);
+      })
+      pendingEvents.push(() => publishEvent(EVENT_TYPES.TRADE_EXECUTED, oppositeUser._id, { email: oppositeUser.email, name: oppositeUser.firstName, tradeDetails: { type: side === 'BUY' ? 'SELL' : 'BUY', team: symbol, quantity: fillQty, price: price, totalAmount: amount } }))
+
       // Update stock stats per fill so high/low/volume reflect each price level swept
+      const prevStats = STOCK_STATS.get(stockId.toString())
+        ? { ...STOCK_STATS.get(stockId.toString()) }
+        : null
       updateStockStats(stockId, price, fillQty);
+      compensation.push(`revert stock stats for ${stockId}`, async () => {
+        if (prevStats) STOCK_STATS.set(stockId.toString(), prevStats)
+        else STOCK_STATS.delete(stockId.toString())
+      })
 
       totalAmount += amount;
       filledQty += fillQty;
@@ -545,11 +711,21 @@ async function marketOrderExecution(userId, side, stockId, qty) {
   incomingOrder.averagePrice = averagePrice;
   incomingOrder.status = status;
   await incomingOrder.save();
-  await publishEvent(EVENT_TYPES.TRADE_EXECUTED, userId, { email: user.email, name: user.firstName, tradeDetails:{type:side,team:symbol,quantity:filledQty,price:averagePrice,totalAmount:totalAmount} });
+  compensation.push('revert incoming market order final state', async () => {
+    await Order.updateOne(
+      { _id: incomingOrder._id },
+      { $set: { filledQuantity: 0, averagePrice: null, status: 'OPEN' } }
+    )
+  })
+
+  pendingEvents.push(() => publishEvent(EVENT_TYPES.TRADE_EXECUTED, userId, { email: user.email, name: user.firstName, tradeDetails: { type: side, team: symbol, quantity: filledQty, price: averagePrice, totalAmount: totalAmount } }))
 
   // Unlock unsold shares for market sell
   if (side === "SELL" && remaining > 0) {
     await unlockSellQty(userId, stockId, remaining);
+    compensation.push('re-lock market sell remainder', async () => {
+      await lockSellQty(userId, stockId, remaining)
+    })
   }
 
   return {
@@ -563,99 +739,91 @@ async function marketOrderExecution(userId, side, stockId, qty) {
 }
 
 
+
+
 export const executeOrder = async (req, res) => {
+  console.log('Received order execution request:', req.body);
+  const userId = req?.body?.userId;
+  if (!userId) return res.status(401).json({ error: 'missing user id (x-user-id header or userId field)' })
+
+  const sideText = typeof req.body?.side === 'string' ? req.body.side.toUpperCase() : ''
+  const typeText = typeof req.body?.type === 'string' ? req.body.type.toUpperCase() : ''
+  const qty = Number(req.body?.qty)
+  const marketId = req.body?.market_id
+  const rawPrice = req.body?.price
+
+  const side = sideText
+  const type = typeText
+  const parsedPrice =
+    rawPrice === null || rawPrice === undefined
+      ? null
+      : Number(rawPrice);
+
+  const price =
+    parsedPrice !== null && Number.isFinite(parsedPrice)
+      ? Number((parsedPrice / 100).toFixed(2))
+      : null;
+  if (!['BUY', 'SELL'].includes(side)) return res.status(400).json({ error: 'side must be BUY or SELL' })
+  if (!['LIMIT', 'MARKET'].includes(type)) return res.status(400).json({ error: 'type must be LIMIT or MARKET' })
+  if (!Number.isFinite(qty) || qty <= 0) return res.status(400).json({ error: 'qty must be a positive number' })
+  if (type === 'LIMIT' && (price === null || price <= 0)) {
+    return res.status(400).json({ error: 'price must be a positive number for limit orders' })
+  }
+
+  const user = await User.findById(userId)
+  if (!user) return res.status(401).json({ error: 'invalid user' })
+
+  const stock = await getStockByMarketId(marketId)
+  if (!stock) return res.status(404).json({ error: 'market not found' })
+
   try {
-    console.log('Received order execution request:', req.body);
-    const userId = req?.body?.userId;
-    if (!userId) return res.status(401).json({ error: 'missing user id (x-user-id header or userId field)' })
+    // Everything below runs serialized per-stock. Different stocks still
+    // process concurrently; two orders for the SAME stock never interleave.
+    const result = await enqueueForStock(stock._id, async () => {
+      const compensation = new CompensationStack(`order:${userId}:${stock._id}`)
+      const pendingEvents = []
 
-    const sideText = typeof req.body?.side === 'string' ? req.body.side.toUpperCase() : ''
-    const typeText = typeof req.body?.type === 'string' ? req.body.type.toUpperCase() : ''
-    const qty = Number(req.body?.qty)
-    const marketId = req.body?.market_id
-    const rawPrice = req.body?.price
+      try {
+        
+        if (side === 'BUY') {
+          if (type === 'LIMIT') {
+            await lockBuyFunds(userId, price, qty)
+            compensation.push('unlockBuyFunds', async () => {
+              await unlockBuyFunds(userId, price * qty)
+            })
+          }
+        } else {
+          await lockSellQty(userId, stock._id, qty)
+          compensation.push('unlockSellQty', async () => {
+            await unlockSellQty(userId, stock._id, qty)
+          })
+        }
 
-    const side = sideText
-    const type = typeText
-    const parsedPrice =
-      rawPrice === null || rawPrice === undefined
-        ? null
-        : Number(rawPrice);
+     
+        const execResult = type === 'LIMIT'
+          ? await limitOrderExecution(userId, side, stock._id, price, qty, compensation, pendingEvents)
+          : await marketOrderExecution(userId, side, stock._id, qty, compensation, pendingEvents)
 
-    const price =
-      parsedPrice !== null && Number.isFinite(parsedPrice)
-        ? Number((parsedPrice / 100).toFixed(2))
-        : null;
-    if (!['BUY', 'SELL'].includes(side)) return res.status(400).json({ error: 'side must be BUY or SELL' })
-    if (!['LIMIT', 'MARKET'].includes(type)) return res.status(400).json({ error: 'type must be LIMIT or MARKET' })
-    if (!Number.isFinite(qty) || qty <= 0) return res.status(400).json({ error: 'qty must be a positive number' })
-    if (type === 'LIMIT' && (price === null || price <= 0)) {
-      return res.status(400).json({ error: 'price must be a positive number for limit orders' })
-    }
+        // Everything committed cleanly — now fire the deferred events.
+        for (const fireEvent of pendingEvents) {
+          try { fireEvent() } catch (evErr) { console.error('event emit failed (non-fatal):', evErr) }
+        }
 
-    const user = await User.findById(userId)
-    if (!user) return res.status(401).json({ error: 'invalid user' })
+        const stats = STOCK_STATS.get(stock._id.toString());
+        const depth = getDepth(stock._id);
+        if (stats) io.emit('stats', { id: stock._id, data: stats });
+        if (depth) io.emit('depth', depth);
 
-    const stock = await getStockByMarketId(marketId)
-    if (!stock) return res.status(404).json({ error: 'market not found' })
-
-    // ── Reserve funds/stock upfront where the amount is known in advance ──
-    // Market BUY is the one case with no upfront number to lock (price unknown
-    // until matching happens), so it's handled per-fill inside marketOrderExecution.
-    let locked = null
-
-    if (side === 'BUY') {
-      if (type === 'LIMIT') {
-        await lockBuyFunds(userId, price, qty)
-        locked = { kind: 'BUY', amount: price * qty }
+        return execResult
+      } catch (err) {
+        console.error('Error during order execution — rolling back:', err);
+        await compensation.rollbackAll(err)
+        throw err
       }
-    } else {
-      await lockSellQty(userId, stock._id, qty)
-      locked = { kind: 'SELL', qty }
-    }
-
-    // ── Run the actual match against the in-memory book. This single call
-    // already handles: creating the Order record, matching, settling both
-    // sides' wallets/stock balances, and resting any unfilled remainder. ──
-    let result
-    try {
-      result = type === 'LIMIT'
-        ? await limitOrderExecution(userId, side, stock._id, price, qty)
-        : await marketOrderExecution(userId, side, stock._id, qty)
-    } catch (matchErr) {
-      console.error('Error during order matching:', matchErr);
-      // Matching failed after we'd already locked funds/stock — give it back.
-      if (locked?.kind === 'BUY') await unlockBuyFunds(userId, locked.amount)
-      if (locked?.kind === 'SELL') await unlockSellQty(userId, stock._id, locked.qty)
-      throw matchErr
-    }
-
-    // ── Refund the unused portion of a locked LIMIT BUY reservation ──
-    // (limit SELL doesn't need this: sell locks exact qty, and any unfilled
-    // qty just stays resting on the book — nothing extra was over-reserved.)
-    if (type === 'LIMIT' && side === 'BUY' && result.filledQty > 0) {
-      const unusedReservation = price * result.remainingQty
-      // remainingQty here means "still resting on book", not refundable —
-      // only refund if the order didn't rest at all (fully filled) or was
-      // for less than originally locked due to a partial-fill-then-rest case.
-      // Since lockBuyFunds locked price*qty and settlement already consumed
-      // exactly price*filledQty via debitFrozen, nothing further is owed here
-      // unless you cancel the resting remainder later.
-    }
-    const stats = STOCK_STATS.get(stock._id.toString());
-    const stockId = stock._id;
-    const depth = getDepth(stockId);
-
-    if (stats) {
-      io.emit('stats', { id: stockId, data: stats });
-    }
-    if (depth) {
-      io.emit('depth', depth);
-    }
-
+    })
 
     return res.status(201).json({
-      message: `Successfully traded ${marketId}  at ${type === 'LIMIT' ? price : result.averagePrice}.`,
+      message: `Successfully ordered ${marketId}  at ${type === 'LIMIT' ? price : result.averagePrice}.`,
       order: result.order,
       filledQty: result.filledQty,
       remainingQty: result.remainingQty,
@@ -668,7 +836,7 @@ export const executeOrder = async (req, res) => {
     });
   } catch (err) {
     console.error('Error executing order:', err);
-    return res.status(400).json({ message: err instanceof Error ? err.message : 'internal error' })
+    return res.status(400).json({ message: 'Order could not be placed. Please try again.' })
   }
 }
 export const getOrderById = async (req, res) => {
@@ -770,7 +938,7 @@ export const getHoldings = async (req, res) => {
     {
       $match: {
         userId: userObjectId,
-        total: { $gt: 0 } // only stocks actually owned
+        total: { $gt: 0 } 
       }
     },
     {
@@ -783,7 +951,7 @@ export const getHoldings = async (req, res) => {
     },
     { $unwind: '$stock' },
     {
-      // pull avg buy price from filled BUY orders (StockBalance has no cost-basis field)
+    
       $lookup: {
         from: 'orders',
         let: { stockId: '$stockId', userId: '$userId' },
@@ -965,7 +1133,7 @@ export const getMyTrades = async (req, res) => {
     const { stockId, userId } = req.params
 
 
-    
+
     if (!stockId || !mongoose.Types.ObjectId.isValid(stockId)) {
       return res.status(400).json({ message: 'Invalid or missing stock id' })
     }
@@ -991,9 +1159,9 @@ export const getMyTrades = async (req, res) => {
         price: t.price,
         qty: t.qty,
         time: t.createdAt,
-        up: Boolean(t.sellOrderId), 
+        up: Boolean(t.sellOrderId),
       }))
-      
+
     return res.json({ userId, myTrades })
   } catch (err) {
     console.error('getMyTrades error:', err)
@@ -1023,141 +1191,29 @@ async function hydrateOrderBooks() {
 
   }
 }
-async function hydrateIPOs() {
-  const cnt = await IPO.countDocuments()
-  if (cnt > 0) return
+// async function hydrateIPOs() {
+//   const cnt = await IPO.countDocuments()
+//   if (cnt > 0) return
 
-  const stocks = await Stock.find({}, "_id title symbol").lean()
+//   const stocks = await Stock.find({}, "_id title symbol").lean()
 
-  const stockMap = Object.fromEntries(
-    stocks.map(stock => [stock.symbol, stock])
-  )
+//   const stockMap = Object.fromEntries(
+//     stocks.map(stock => [stock.symbol, stock])
+//   )
 
-  const openTime = new Date()
-  const closeTime = new Date(openTime)
-  closeTime.setMonth(closeTime.getMonth() + 1)
+//   const openTime = new Date()
+//   const closeTime = new Date(openTime)
+//   closeTime.setMonth(closeTime.getMonth() + 1)
 
-  await IPO.create([
-    {
-      stockId: stockMap.CSK._id,
-      teamName: stockMap.CSK.title,
-      symbol: "CSK",
-      ipoPrice: 99,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.MI._id,
-      teamName: stockMap.MI.title,
-      symbol: "MI",
-      ipoPrice: 95,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.RCB._id,
-      teamName: stockMap.RCB.title,
-      symbol: "RCB",
-      ipoPrice: 92,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.KKR._id,
-      teamName: stockMap.KKR.title,
-      symbol: "KKR",
-      ipoPrice: 88,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.GT._id,
-      teamName: stockMap.GT.title,
-      symbol: "GT",
-      ipoPrice: 84,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.SRH._id,
-      teamName: stockMap.SRH.title,
-      symbol: "SRH",
-      ipoPrice: 81,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.RR._id,
-      teamName: stockMap.RR.title,
-      symbol: "RR",
-      ipoPrice: 78,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.DC._id,
-      teamName: stockMap.DC.title,
-      symbol: "DC",
-      ipoPrice: 75,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.LSG._id,
-      teamName: stockMap.LSG.title,
-      symbol: "LSG",
-      ipoPrice: 72,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    },
-    {
-      stockId: stockMap.PBKS._id,
-      teamName: stockMap.PBKS.title,
-      symbol: "PBKS",
-      ipoPrice: 69,
-      totalShares: 10000,
-      availableShares: 10000,
-      status: "OPEN",
-      openTime,
-      closeTime
-    }
-  ])
-}
+  
 
-
+// }
 
 export const initTrading = async () => {
   console.log('Initializing trading system...')
   await seedStocks()
   await hydrateOrderBooks()
-  await hydrateIPOs()
+  //await hydrateIPOs()
   await seedStockStats();
 
 }

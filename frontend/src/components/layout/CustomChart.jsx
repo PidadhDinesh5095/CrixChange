@@ -1858,9 +1858,7 @@ export default function CrixchangeTradingTerminal() {
     return map;
   }, [stocks, statsById]);
 
-  // Real live stat for the currently selected stock — this is what drives
-  // the TerminalHeader and OrderBookPanel now, instead of the mock candle
-  // math. Only the chart itself keeps reading from candleData (now trade-driven).
+  
   const selectedStat = statsById[String(selectedTeamId)] || {};
   const headerCurrent = { close: selectedStat.price ?? selectedStock?.price ?? 0, img: selectedStock?.image };
   const headerChange = selectedStat.change ?? selectedStock?.change ?? 0;
@@ -1876,7 +1874,6 @@ export default function CrixchangeTradingTerminal() {
   const [buyPrice, setBuyPrice] = useState(null);
   const [sellPrice, setSellPrice] = useState(null);
 
-  // --- Mobile-only UI state (does not affect desktop rendering) ---
   const [mobileTab, setMobileTab] = useState("chart");
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileSheetSide, setMobileSheetSide] = useState("buy");
@@ -1888,10 +1885,7 @@ export default function CrixchangeTradingTerminal() {
   const [favorites, setFavorites] = useState(() => new Set());
   const [search, setSearch] = useState("");
 
-  // Market trades: colored by comparison to the PREVIOUS trade's price
-  // (real-exchange behavior), not by a static buy/sell side.
-  // NOTE: TradesPanel below is wired to the real Redux `trades`/`myTrades`,
-  // not this mock-derived value — left in place in case it's needed elsewhere.
+  
   const marketTrades = useMemo(() => {
     const chronological = ballData.slice(-25);
     const withDirection = chronological.map((d, i) => {
@@ -1909,9 +1903,6 @@ export default function CrixchangeTradingTerminal() {
 
   const toggleFav = (id) => setFavorites((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  // Selecting a team now navigates to /match-performance/:id, which the
-  // effect above picks up via useParams and syncs back into selectedTeamId.
-  // This keeps deep-linking, back/forward nav, and refresh all consistent.
   const handleSelectTeam = (id) => {
     setSelectedTeamId(id);
     navigate(`/match-performance/${id}`);
