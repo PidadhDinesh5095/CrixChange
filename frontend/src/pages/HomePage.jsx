@@ -525,7 +525,12 @@ const HomePage = () => {
             )}
           </motion.div>
 
-          {liveMatches.length > 0 && (
+         
+
+          <div className="pointer-events-none absolute bottom-0 left-0 w-full h-[50%] z-10 bg-gradient-to-t from-black to-transparent" />
+        </div>
+      </section>
+       {liveMatches.length > 0 && (
             <section className="py-20 bg-white dark:bg-black border-t border-gray-200 dark:border-white">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
@@ -613,10 +618,6 @@ const HomePage = () => {
               </div>
             </section>
           )}
-
-          <div className="pointer-events-none absolute bottom-0 left-0 w-full h-[50%] z-10 bg-gradient-to-t from-black to-transparent" />
-        </div>
-      </section>
 
       {/* Live Trading Terminal Preview */}
 

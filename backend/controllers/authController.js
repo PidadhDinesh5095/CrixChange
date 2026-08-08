@@ -135,7 +135,7 @@ export const login = async (req, res) => {
       message: error.details[0].message
     });
   }
-
+console.log(req.headers.origin);
   const { email, password } = req.body;
 
   // Check for user (include password for comparison)

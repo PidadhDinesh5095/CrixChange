@@ -194,7 +194,7 @@ const WalletPage = () => {
       const rzp = new Razorpay(options);
       rzp.open();
       if (depositFunds.fulfilled.match(result)) {
-        toast.success('Deposit successful!');
+        toast.success('Deposit initiated!');
       } else if (depositFunds.rejected.match(result)) {
         toast.error(result.payload || 'Deposit failed. Please try again.');
       }

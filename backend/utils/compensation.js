@@ -1,12 +1,9 @@
-// compensation.js
-// A saga-style compensation stack. Push an undo function ONLY after a step
-// succeeds. If anything later fails, call rollbackAll() to unwind everything
-// that actually happened, in reverse order.
+
 
 export class CompensationStack {
   constructor(label = 'tx') {
     this.label = label
-    this.steps = [] // { name, undo: async () => {} }
+    this.steps = []
   }
 
   push(name, undoFn) {
@@ -30,13 +27,8 @@ export class CompensationStack {
   }
 }
 
-// ---- Per-stock serialization queue ----
-// Guarantees that all order processing for a given stockId runs strictly
-// one-at-a-time, in arrival order, even though the functions are async and
-// yield at multiple await points internally. Different stocks still run
-// independently/concurrently.
 
-const stockQueues = new Map() // stockId(string) -> Promise chain tail
+const stockQueues = new Map() 
 
 export function enqueueForStock(stockId, task) {
   const key = String(stockId)
